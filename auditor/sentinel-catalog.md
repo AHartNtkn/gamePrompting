@@ -362,6 +362,11 @@ Pattern: Morale/happiness is a single 0-100 scalar that goes up or down from eve
 Why: Single scalars are the simplest model. Multi-dimensional satisfaction requires designing tensions.
 Detection: Is morale a single number with no interacting dimensions? Flag it.
 
+**S60. Scripted Phase Triggers**
+Pattern: The game uses hardcoded turn counts, timers, or threshold checks to artificially impose phase transitions, difficulty changes, or content unlocks (e.g., `if turn >= 10: unlock_tier_2()`, `if score >= 100: spawn_boss()`). Macro-level structure is bolted on rather than emerging from system interactions.
+Why: LLMs default to scripted triggers because they're the simplest way to create the appearance of phases. In a well-designed simulation, phases emerge because systems naturally reach different equilibria — resource depletion shifts priorities, capability accumulation opens strategies, environmental pressure changes the viable action space. Scripted triggers bypass the simulation and undermine the coherence that makes simulations compelling.
+Detection: Search for conditionals keyed on turn number, elapsed time, cumulative score, or fixed thresholds that change game rules, unlock content, or alter difficulty. If the game's phase structure would disappear entirely if these conditionals were removed (because the underlying systems produce no natural differentiation), FAIL.
+
 ---
 
 ## Summary
@@ -377,8 +382,8 @@ Detection: Is morale a single number with no interacting dimensions? Flag it.
 | VII. World Autopilot | 8 | Autocomplete settings/narrative |
 | VIII. Structural Autopilot | 5 | Template structures |
 | IX. Untested Gameplay | 8 | Works in code, broken in play |
-| X. Miscellaneous | 6 | Other red flags |
-| **Total** | **58** | |
+| X. Miscellaneous | 7 | Other red flags |
+| **Total** | **59** | |
 
 ### Usage Note
 

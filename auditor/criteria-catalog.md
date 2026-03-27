@@ -96,6 +96,10 @@ Can the game's mechanics be combined by the player to produce effects that logic
 Can the player predict the outcome of novel system interactions by reasoning from established rules? When two systems interact in a situation the player hasn't seen, can they correctly guess what happens based on how each system works individually?
 *(Player experience gap — distinct from A2 Rule Consistency (rules don't contradict) and C9 (world is believable); this asks whether rules compose predictably for novel situations)*
 
+**B11. Structural Emergence**
+Do the game's macro-level patterns — phases, difficulty progression, pacing arcs — arise from its systems, or are they imposed by special-case logic? In a well-designed simulation, early/mid/late game feel different because the systems naturally reach different equilibria (resource depletion shifts priorities, capability accumulation opens new strategies, environmental pressure changes the viable action space), not because scripted triggers change the rules at predetermined points. If removing all phase/difficulty scripting would cause the game to feel undifferentiated, the systems aren't doing their job.
+*(Player experience gap — Project Zomboid, Dwarf Fortress, RimWorld: phases emerge from systems reaching different equilibria, never from scripted triggers. Distinct from J7 Arc Structure which asks whether phases exist; this asks whether they're earned by the simulation or imposed on it)*
+
 ---
 
 ## C. World & Simulation
@@ -533,7 +537,7 @@ Does engagement rise and fall in a satisfying rhythm? Are there peaks and valley
 *(Schell — Lens #61)*
 
 **J7. Arc Structure**
-Does the game have a well-defined arc from opening through midgame to endgame? Do different phases feel different?
+Does the game have a well-defined arc from opening through midgame to endgame? Do different phases feel different? Note: this criterion asks whether phases *exist*; B11 (Structural Emergence) asks whether they *emerge from systems* rather than being scripted. A game can score well on J7 but poorly on B11 if its phases are hardcoded rather than emergent.
 *(Burgun — clockwork design)*
 
 **J8. Session Structure**

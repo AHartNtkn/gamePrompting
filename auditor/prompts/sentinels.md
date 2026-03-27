@@ -207,6 +207,9 @@ Check: Examine random events. Do >80% just modify stats with no player decision 
 **S58. Happiness As A Single Number** `[CONDITIONAL: game has morale/happiness mechanic]`
 Check: Is morale a single 0-100 scalar with no interacting dimensions? If yes, FAIL.
 
+**S60. Scripted Phase Triggers**
+Check: Search for conditionals keyed on turn number, elapsed time, cumulative score, or fixed thresholds that change game rules, unlock content, or alter difficulty (e.g., `if turn >= 10`, `if score >= 100`). If the game's phase structure would disappear entirely if these conditionals were removed — because the underlying systems produce no natural differentiation on their own — FAIL.
+
 ## Output Format
 
 Output your results in exactly this format:

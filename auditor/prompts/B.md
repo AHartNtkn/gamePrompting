@@ -95,3 +95,14 @@ Present the player (or simulate) with a novel situation where two or more system
 - Or do novel combinations produce arbitrary results that couldn't be deduced from existing knowledge?
 
 Score 0 if novel system interactions produce arbitrary outcomes — knowing how each system works individually provides no guidance for predicting combined behavior. Score 2 if some interactions are predictable from first principles but others produce unexpected or inconsistent results. Score 4 if the player can reliably predict the outcome of never-before-seen system interactions by reasoning from established rules — the systems compose transparently.
+
+### B11. Structural Emergence (0-5)
+
+Examine whether the game's macro-level patterns — phases, difficulty progression, pacing arcs — arise from its systems or are imposed by special-case logic. Check:
+- Does the game use hardcoded turn-count triggers, timers, or threshold checks to change difficulty, unlock content, or impose phase transitions?
+- If you removed all such scripted triggers, would the game still produce distinguishable early/mid/late phases through natural system dynamics (resource depletion shifting priorities, capability accumulation opening strategies, environmental pressure changing viable actions)?
+- Do the systems naturally reach different equilibria over time, or does the game feel the same at turn 30 as turn 5 unless a script intervenes?
+
+Compare: In Project Zomboid, early game is looting-focused because you have nothing, mid game shifts to base-building because you've accumulated enough to defend, late game shifts because scarcity changes character. No trigger — just systems reaching different equilibria. Contrast with a game that plays identically every turn until `if turn >= 15: unlock_advanced_buildings()`.
+
+Score 0 if the game's macro structure is entirely scripted — phases, difficulty, and progression changes are all triggered by hardcoded conditions rather than arising from system dynamics. Score 2 if some structural emergence exists (e.g., resource depletion naturally changes priorities) but the game also relies on scripted triggers for major transitions. Score 4 if the game's phases, difficulty curve, and progression arc arise entirely from system interactions — removing all explicit phase/difficulty scripting would not flatten the experience because the systems themselves produce natural differentiation.
