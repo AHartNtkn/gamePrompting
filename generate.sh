@@ -112,6 +112,8 @@ if [[ -d "$GAMES_DIR" ]] && ls -A "$GAMES_DIR" | grep -qv '^\.git' 2>/dev/null; 
     echo "Archived previous game(s) to: $ARCHIVE_DEST"
 fi
 
+# Clean output directory so the generator starts fresh
+rm -rf "$OUTPUT_DIR"
 mkdir -p "$OUTPUT_DIR"
 
 # Assemble the full prompt
