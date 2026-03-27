@@ -167,15 +167,25 @@ ${category_text}
 
 ${GAME_INFO}"
 
-    claude -p "$full_prompt" \
-        --model "$MODEL" \
-        --output-format text \
-        --tools "Bash,Read" \
-        --permission-mode bypassPermissions \
-        --add-dir "$GAME_DIR" \
-        > "$output_file" 2>/dev/null || {
-        mv "$output_file" "${output_file%.txt}_error.txt" 2>/dev/null
-    }
+    local attempt
+    for attempt in 1 2 3; do
+        claude -p "$full_prompt" \
+            --model "$MODEL" \
+            --output-format text \
+            --tools "Bash,Read" \
+            --permission-mode bypassPermissions \
+            --add-dir "$GAME_DIR" \
+            > "$output_file" 2>/dev/null || {
+            mv "$output_file" "${output_file%.txt}_error.txt" 2>/dev/null
+            return
+        }
+        # Retry if output is empty (transient API failure)
+        if [[ -s "$output_file" ]]; then
+            return
+        fi
+        echo "  [${id}] Empty response (attempt $attempt/3), retrying..." >&2
+        sleep 5
+    done
 }
 
 # Collect all jobs: categories A-U + sentinels
