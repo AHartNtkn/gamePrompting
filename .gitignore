@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.claude/
+results.tsv
+journal.md
+run.log
+audit.log
+logs/
+games/
+audits/
