@@ -16,11 +16,13 @@ LOG_DIR="$SCRIPT_DIR/logs"
 
 MODEL="sonnet"
 MAX_ITERATIONS=0  # 0 = infinite
+SKIP_TO=""        # resume point: "audit", "evaluate", "loop"
 
 while [[ $# -gt 0 ]]; do
     case $1 in
         --model) MODEL="$2"; shift 2 ;;
         --iterations|-n) MAX_ITERATIONS="$2"; shift 2 ;;
+        --skip-to) SKIP_TO="$2"; shift 2 ;;
         *) echo "Unknown argument: $1" >&2; exit 1 ;;
     esac
 done
@@ -104,15 +106,19 @@ completed_iterations() {
 # the current prompt without modifications, so the journal and scores
 # have real data before the first modification attempt.
 
-if [[ $(completed_iterations) -eq 0 ]]; then
+if [[ $(completed_iterations) -eq 0 && "$SKIP_TO" != "loop" ]]; then
     log "========================================"
     log "  Baseline Run"
     log "========================================"
 
     CONCEPT=1
-    log "  Generating baseline game for concept $CONCEPT..."
 
-    timeout 3600 ./generate.sh "$CONCEPT" --model "$MODEL" 2>&1 | tee run.log || true
+    if [[ "$SKIP_TO" == "audit" || "$SKIP_TO" == "evaluate" ]]; then
+        log "  Skipping generation (--skip-to $SKIP_TO)"
+    else
+        log "  Generating baseline game for concept $CONCEPT..."
+        timeout 3600 ./generate.sh "$CONCEPT" --model "$MODEL" 2>&1 | tee run.log || true
+    fi
 
     # Check for game by looking for run.sh, not exit codes
     GAME_DIR=$(ls -dt "$SCRIPT_DIR/games"/*/ 2>/dev/null | head -1)
@@ -124,10 +130,14 @@ if [[ $(completed_iterations) -eq 0 ]]; then
         log ""
         # Continue to main loop anyway
     else
-        log "  Game generated: $GAME_DIR"
-        log "  Auditing baseline game..."
+        log "  Game found: $GAME_DIR"
 
-        timeout 7200 ./audit.sh "$GAME_DIR" --model "$MODEL" 2>&1 | tee audit.log || true
+        if [[ "$SKIP_TO" == "evaluate" ]]; then
+            log "  Skipping audit (--skip-to evaluate)"
+        else
+            log "  Auditing baseline game..."
+            timeout 7200 ./audit.sh "$GAME_DIR" --model "$MODEL" 2>&1 | tee audit.log || true
+        fi
 
         AUDIT_DIR=$(ls -dt "$SCRIPT_DIR/audits"/*/ 2>/dev/null | head -1)
         if [[ -z "$AUDIT_DIR" || ! -f "$AUDIT_DIR/summary.txt" ]]; then
