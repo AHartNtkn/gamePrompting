@@ -241,11 +241,11 @@ while [[ ${#RUNNING_PIDS[@]} -gt 0 ]]; do
     # Find which job finished (check all pids, some may have exited)
     for pid in "${!RUNNING_PIDS[@]}"; do
         if ! kill -0 "$pid" 2>/dev/null; then
-            local id="${RUNNING_PIDS[$pid]}"
+            id="${RUNNING_PIDS[$pid]}"
             unset "RUNNING_PIDS[$pid]"
 
             # Check output
-            local output_file="$OUTPUT_DIR/${id}.txt"
+            output_file="$OUTPUT_DIR/${id}.txt"
             if [[ -f "$output_file" ]] && [[ -s "$output_file" ]]; then
                 echo "  [${id}] Done"
             else
