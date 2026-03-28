@@ -207,13 +207,12 @@ fi
 
 # --- Main Loop ---
 
-# Count concepts dynamically from test-prompts.md
-NUM_CONCEPTS=$(grep -c '^## Prompt [0-9]*:' "$SCRIPT_DIR/test-prompts.md")
-log "Found $NUM_CONCEPTS concepts in test-prompts.md"
-
-# Generate a shuffled order for each full cycle through concepts
+# Re-reads concept count from test-prompts.md each cycle so new
+# concepts added while the loop is running get picked up.
 shuffle_concepts() {
-    shuf -i 1-"$NUM_CONCEPTS" -n "$NUM_CONCEPTS"
+    local n
+    n=$(grep -c '^## Prompt [0-9]*:' "$SCRIPT_DIR/test-prompts.md")
+    shuf -i 1-"$n" -n "$n"
 }
 
 CONCEPT_ORDER=()
@@ -221,7 +220,6 @@ CONCEPT_ORDER=()
 log "========================================"
 log "  Autoresearch Loop"
 log "  Model: $MODEL"
-log "  Concepts: $NUM_CONCEPTS"
 log "  Iterations: $([ "$MAX_ITERATIONS" -eq 0 ] && echo "unlimited" || echo "$MAX_ITERATIONS")"
 log "========================================"
 log ""

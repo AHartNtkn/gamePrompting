@@ -93,6 +93,18 @@ A cooking simulation game. The player prepares dishes to meet customer expectati
 
 ---
 
+## Prompt 15: Auto Repair Shop
+
+A car repair game. Customers bring in vehicles with problems the player must diagnose and fix. Repair involves realistically disassembling components to reach the broken part — you can't replace a head gasket without removing the intake manifold first. Disassembly must be geometrically coherent (parts block access to other parts based on physical layout). Different car models have different layouts, part arrangements, and common failure points. The player manages shop time, parts inventory, customer expectations, and the tradeoff between thoroughness and speed.
+
+---
+
+## Prompt 16: Network Intrusion Simulator
+
+A hacking simulation game. The player operates on a realistically simulated network with multiple interconnected computers, each running simulated operating systems, services, and security measures. The goal is to locate specific information for clients by exploring the network — scanning hosts, exploiting services, escalating privileges, pivoting between machines, covering tracks. Network topology, service versions, firewall rules, and access controls must be internally consistent. Different contracts require different approaches — some need stealth, some need speed, some need specific data extraction.
+
+---
+
 ## Coverage Analysis
 
 Which criteria categories each prompt is likely to exercise:
