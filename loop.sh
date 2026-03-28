@@ -301,6 +301,9 @@ $(cat "$JOURNAL")
 ## Results History
 $(cat "$RESULTS")
 
+## Most Recent Generation Process Summary
+$(cat "$SCRIPT_DIR/generation-summary.md" 2>/dev/null || echo "(no generation summary available)")
+
 ${AUDIT_CONTEXT}
 
 ## Instructions
@@ -388,6 +391,39 @@ Do NOT generate or audit a game. Only modify the generator files and commit."
         timeout 86400 ./generate.sh "$CONCEPT" --model "$MODEL" 2>&1 | tee run.log || true
     fi
 
+    # Summarize the generation log into a timeline for the evaluate step
+    if [[ -s run.log ]]; then
+        log "  Summarizing generation log..."
+        GEN_SUMMARY_PROMPT="You are a process analyst. Read the generation log below and produce a concise timeline of what the generator agent did. Focus on:
+
+1. **Phases and time allocation** — how long on design vs implementation vs play-testing vs iteration
+2. **Sub-agent usage** — which agents were spawned, what they found
+3. **Errors and recoveries** — crashes, import failures, tmux issues, files rewritten
+4. **Play-testing observations** — what the agent found during play, what it tried to fix
+5. **Incomplete work** — anything the agent started but didn't finish (e.g., killed by timeout mid-fix)
+6. **Process failures** — did it skip play-testing? Did it not use sub-agents? Did it spend too long on one phase?
+
+Output a timeline with timestamps (relative to start) and one line per significant event. End with a 'PROCESS ISSUES' section listing any problems with HOW the game was built (not what's wrong with the game itself — the auditor handles that).
+
+## Generation Log
+$(cat run.log)"
+
+        GEN_SUMMARY_LOG="$LOG_DIR/gen-summary-iter${ITERATION}.log"
+        run_claude "$GEN_SUMMARY_LOG" "$GEN_SUMMARY_PROMPT" \
+            --model haiku \
+            --tools "Read" \
+            --permission-mode bypassPermissions \
+            || true
+
+        # Extract the summary text from stream-json result
+        GEN_SUMMARY=$(jq -r 'select(.type=="result") | .result // empty' "$GEN_SUMMARY_LOG" 2>/dev/null) || GEN_SUMMARY=""
+
+        if [[ -n "$GEN_SUMMARY" ]]; then
+            echo "$GEN_SUMMARY" > "$SCRIPT_DIR/generation-summary.md"
+            log "  Generation summary written."
+        fi
+    fi
+
     GAME_DIR=$(ls -dt "$SCRIPT_DIR/games"/*/ 2>/dev/null | head -1)
     if [[ -z "$GAME_DIR" || ! -f "$GAME_DIR/run.sh" ]]; then
         log "  ERROR: No game produced (no run.sh found)."
@@ -460,6 +496,9 @@ Score: $SCORE
 Sentinel passes: $SENTINEL_PASS
 Sentinel failures: $SENTINEL_FAIL
 Thesis: $THESIS_TEXT
+
+## Generation Process Summary
+$(cat "$SCRIPT_DIR/generation-summary.md" 2>/dev/null || echo "(no generation summary available)")
 
 ## Full Audit Output
 $FULL_AUDIT
