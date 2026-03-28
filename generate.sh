@@ -156,6 +156,7 @@ JQ_COMPACT='del(.session_id, .uuid, .timestamp, .parent_tool_use_id, .rate_limit
       else . end]
   else . end'
 
+# Pipe through compact jq filter. Save to log file AND display truncated on terminal.
 claude -p - \
     --model "$MODEL" \
     --output-format stream-json --verbose \
@@ -163,7 +164,7 @@ claude -p - \
     --permission-mode bypassPermissions \
     --add-dir "$OUTPUT_DIR" \
     < "$PROMPT_TMP" \
-    2>&1 | tee >(jq -c --unbuffered "$JQ_COMPACT" 2>/dev/null > "$GEN_LOG") | jq -c --unbuffered 'del(.session_id, .uuid, .timestamp, .parent_tool_use_id, .rate_limit_info, .mcp_servers, .slash_commands, .apiKeySource, .claude_code_version, .output_style, .agents, .skills, .plugins, .fast_mode_state, .permissionMode, .modelUsage, .permission_denials, .message.model, .message.id, .message.usage, .message.stop_reason, .message.stop_sequence, .message.context_management, .tool_use_result, .total_cost_usd, .usage, .duration_ms, .duration_api_ms)' 2>/dev/null | cut -c1-200 || true
+    2>&1 | jq -c --unbuffered "$JQ_COMPACT" 2>/dev/null | tee "$GEN_LOG" | cut -c1-200 || true
 
 rm -f "$PROMPT_TMP"
 
