@@ -310,7 +310,7 @@ ${AUDIT_CONTEXT}
 
 Before considering any specific change, evaluate the current generator ARCHITECTURE:
 
-- Read all files under generator/ — the main prompt, every agent definition, any reference files.
+- Read all files under generator/ (the main prompt and any reference files) and .claude/agents/ (agent definitions). Also check .claude/commands/ and .claude/skills/ if they exist.
 - Ask: is the current structure the right structure? Consider:
   - Should any section of the main prompt be extracted into a separate agent that runs as a verification pass?
   - Are there failure patterns recurring across iterations that would be better caught by a NEW agent than by more text in the existing prompt?
@@ -331,11 +331,17 @@ Based on the journal, audit feedback, and your architectural assessment:
 
 ### Step 3: Implement
 
-You have full control over everything under generator/:
-- Edit, create, delete, rename, or restructure any files
-- Create new agents with new tools and instructions
-- Split the main prompt into multiple files
-- Add reference documents, example libraries, checklists
+You have full control over:
+- **generator/** — the main prompt and any reference files
+- **.claude/agents/** — agent definitions (play-tester, balance-checker, design-reviewer, system-implementer, plus any new agents you create). These are automatically available to the generator when it spawns sub-agents.
+- **.claude/commands/** — custom slash commands available to the generator
+- **.claude/skills/** — custom skills available to the generator
+
+You can:
+- Edit, create, delete, rename, or restructure any files in these locations
+- Create new agents that address specific failure classes
+- Split the main prompt into multiple files or reference documents
+- Add example libraries, checklists, formula references
 - Change how agents interact and when they're invoked
 
 ### Step 4: Commit and report

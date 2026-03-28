@@ -1,6 +1,12 @@
 __pycache__/
 *.pyc
-.claude/
+.claude/settings.*
+.claude/projects/
+.claude/memory/
+.claude/shell-snapshots/
+.claude/credentials*
+.claude/statsig/
+.claude/todos/
 results.tsv
 journal.md
 run.log

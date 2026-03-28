@@ -11,8 +11,9 @@ Refine a game creation prompt through automated evaluation. The core artifacts a
 - `generate.sh` — Creates a game from a concept using the game creation prompt.
 - `audit.sh` — Runs all auditor prompts against a game and aggregates scores.
 - `generator/game-creation-prompt.md` — The game creation prompt (what autoresearch optimizes).
-- `auditor/criteria-catalog.md` — 212 evaluable game design criteria from 17+ frameworks.
-- `auditor/sentinel-catalog.md` — 58 LLM-specific and template-design failure mode detectors.
+- `.claude/agents/` — Sub-agent definitions (play-tester, balance-checker, design-reviewer, system-implementer). Automatically available to the generator when spawning agents. The autoresearch loop can create, modify, or delete these.
+- `auditor/criteria-catalog.md` — 240 evaluable game design criteria from 17+ frameworks.
+- `auditor/sentinel-catalog.md` — 64 LLM-specific and template-design failure mode detectors.
 - `auditor/shared-preamble.md` — Common evaluation framework concatenated with each category prompt.
 - `auditor/prompts/A.md` through `U.md` — 21 category auditor prompts with specific evaluation instructions.
 - `auditor/prompts/sentinels.md` — Sentinel check prompt (binary pass/fail).

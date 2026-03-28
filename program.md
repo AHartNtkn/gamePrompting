@@ -38,7 +38,10 @@ git checkout -b autoresearch/mar27
 | `journal.md` | Persistent research journal (untracked) | Evaluator agent |
 | `results.tsv` | Score log (untracked) | loop.sh |
 | `logs/loop-*.log` | Full timestamped logs (untracked) | loop.sh |
-| `generator/**` | Game creation prompt + agents | Research agent |
+| `generator/**` | Game creation prompt + reference files | Research agent |
+| `.claude/agents/` | Sub-agent definitions | Research agent |
+| `.claude/commands/` | Custom slash commands | Research agent |
+| `.claude/skills/` | Custom skills | Research agent |
 | `auditor/**` | Evaluation standard | Nobody (read-only) |
 | `test-prompts.md` | 5 fixed game concepts | Nobody (read-only) |
 
