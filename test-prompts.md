@@ -45,9 +45,9 @@ A gardening/farm simulation game. Players manage plots of various kinds with an 
 
 ---
 
-## Prompt 7: Fishing Vessel Management
+## Prompt 7: Fishing Game
 
-A fishing game centered on managing and upgrading a fishing vessel. Method, weather, location, season, and time of day should realistically affect both what is caught and the challenges players face traversing the ocean. The player should be able to scale from a dinky rowboat to a proper ocean-storm-ready vessel. Risk management — knowing when to push further out vs. when to head back — is a core tension.
+A fishing game. The core activity is fishing — choosing where to cast, what bait/lure to use, reading conditions, and landing catches. Fish species vary by location, depth, season, weather, and time of day. The player also manages and upgrades their vessel, scaling from a dinky rowboat to an ocean-going ship, which determines where they can fish and what conditions they can survive. Risk management — pushing further out for better catches vs. getting home safe — is a core tension.
 
 ---
 
@@ -84,6 +84,12 @@ An office organization and management game. Hire staff, assign roles, manage pro
 ## Prompt 13: Squad Tactical Combat
 
 A tactical combat game where the player controls a squad fighting groups of enemy NPCs. Positioning, cover, flanking, elevation, and line of sight matter. Squad members have individual classes, equipment, and abilities. Enemies have distinct tactics — some suppress, some flank, some rush. Terrain is destructible or interactive. The player must coordinate squad actions under an action economy where doing everything isn't possible and prioritization is the core skill.
+
+---
+
+## Prompt 14: Cooking Simulation
+
+A cooking simulation game. The player prepares dishes to meet customer expectations. Ingredient preparation must be realistic — chopping, marinating, blanching, reducing, etc. each take time and affect the result differently. Cooking techniques (searing, braising, baking, frying, steaming) have realistic interactions with ingredients — overcooking degrades quality, undercooking is unsafe, timing multiple components to finish together is a core challenge. Customers have varied preferences and tolerances. The player must manage time, ingredient inventory, and kitchen workflow under pressure.
 
 ---
 
