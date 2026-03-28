@@ -226,19 +226,19 @@ while true; do
     ' "$SCRIPT_DIR/test-prompts.md")
 
     log "========================================"
-    log "  Iteration $ITERATION — Concept $CONCEPT"
+    log "  Iteration $ITERATION"
     log "========================================"
 
     # ------------------------------------------------------------------
-    # Step 1: MODIFY
+    # Step 1: MODIFY (responds to previous audit)
     # ------------------------------------------------------------------
 
     if [[ "$SKIP_TO" == "audit" || "$SKIP_TO" == "evaluate" ]]; then
-        log "[Step 1] SKIPPED (--skip-to $SKIP_TO)"
+        log "[Step 1: Modify] SKIPPED (--skip-to $SKIP_TO)"
         THESIS_TEXT="(skipped — resuming from existing state)"
     else
 
-    log "[Step 1] Analyzing feedback and modifying generator..."
+    log "[Step 1: Modify] Responding to audit feedback..."
 
     LATEST_AUDIT=""
     AUDIT_CONTEXT=""
@@ -358,9 +358,9 @@ Do NOT generate or audit a game. Only modify the generator files and commit."
     # ------------------------------------------------------------------
 
     if [[ "$SKIP_TO" == "audit" || "$SKIP_TO" == "evaluate" ]]; then
-        log "[Step 2] SKIPPED (--skip-to $SKIP_TO)"
+        log "[Step 2: Generate] SKIPPED (--skip-to $SKIP_TO)"
     else
-        log "[Step 2] Generating game for concept $CONCEPT..."
+        log "[Step 2: Generate] Concept $CONCEPT..."
         timeout 86400 ./generate.sh "$CONCEPT" --model "$MODEL" 2>&1 | tee run.log || true
     fi
 
@@ -383,9 +383,9 @@ Do NOT generate or audit a game. Only modify the generator files and commit."
     # ------------------------------------------------------------------
 
     if [[ "$SKIP_TO" == "evaluate" ]]; then
-        log "[Step 3] SKIPPED (--skip-to evaluate)"
+        log "[Step 3: Audit] SKIPPED (--skip-to evaluate)"
     else
-        log "[Step 3] Auditing game..."
+        log "[Step 3: Audit] Auditing game..."
         timeout 86400 ./audit.sh "$GAME_DIR" --model "$MODEL" 2>&1 | tee audit.log || true
     fi
 
@@ -416,7 +416,7 @@ Do NOT generate or audit a game. Only modify the generator files and commit."
     # Step 4: EVALUATE + UPDATE JOURNAL
     # ------------------------------------------------------------------
 
-    log "[Step 4] Evaluating results and updating journal..."
+    log "[Step 4: Evaluate] Updating journal..."
 
     FULL_AUDIT=""
     for f in "$AUDIT_DIR"/*.txt; do
