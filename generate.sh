@@ -125,11 +125,40 @@ echo ""
 echo "Generating..."
 echo ""
 
-# Run the generator with full tool access.
+# Load custom agents from .claude/agents/ for --agents flag.
+# claude -p does not auto-discover agents; they must be passed as JSON.
+AGENTS_DIR="$SCRIPT_DIR/.claude/agents"
+AGENTS_JSON="{}"
+if [[ -d "$AGENTS_DIR" ]]; then
+    for agent_file in "$AGENTS_DIR"/*.md; do
+        [[ -f "$agent_file" ]] || continue
+        agent_name=$(basename "$agent_file" .md)
+
+        # Extract frontmatter fields
+        description=$(awk '/^---$/{n++; next} n==1 && /^description:/{sub(/^description: */, ""); print; exit}' "$agent_file")
+        tools=$(awk '/^---$/{n++; next} n==1 && /^tools:/{sub(/^tools: */, ""); print; exit}' "$agent_file")
+
+        # Extract body (everything after second ---)
+        prompt=$(awk '/^---$/{n++; next} n>=2{print}' "$agent_file")
+
+        # Build JSON entry
+        agent_json=$(jq -n \
+            --arg desc "$description" \
+            --arg prompt "$prompt" \
+            --arg tools "$tools" \
+            '{description: $desc, prompt: $prompt, tools: ($tools | gsub("[\\[\\] ]"; "") | split(","))}')
+
+        AGENTS_JSON=$(echo "$AGENTS_JSON" | jq --arg name "$agent_name" --argjson agentdef "$agent_json" '. + {($name): $agentdef}')
+    done
+fi
+
 # Write prompt to temp file to avoid "Argument list too long" for large prompts.
-# stream-json + verbose streams events in real time.
 PROMPT_TMP=$(mktemp)
 echo "$FULL_PROMPT" > "$PROMPT_TMP"
+
+# Write agents JSON to temp file too (can be large)
+AGENTS_TMP=$(mktemp)
+echo "$AGENTS_JSON" > "$AGENTS_TMP"
 
 # Two output paths from the stream:
 # 1. generation.log — compact valid JSON with large content truncated (for the summarizer)
@@ -163,10 +192,11 @@ claude -p - \
     --tools "Bash,Read,Write,Edit,Glob,Grep,Agent" \
     --permission-mode bypassPermissions \
     --add-dir "$OUTPUT_DIR" \
+    --agents "$(cat "$AGENTS_TMP")" \
     < "$PROMPT_TMP" \
     2>&1 | jq -c --unbuffered "$JQ_COMPACT" 2>/dev/null | tee "$GEN_LOG" | cut -c1-200 || true
 
-rm -f "$PROMPT_TMP"
+rm -f "$PROMPT_TMP" "$AGENTS_TMP"
 
 echo ""
 
