@@ -317,6 +317,7 @@ Before considering any specific change, evaluate the current generator ARCHITECT
   - Is the main prompt getting too long? Would splitting it (e.g., separate design-phase and implementation-phase prompts, or genre-specific guidance files) improve focus?
   - Are the existing agents underutilized? Would changing their instructions, adding new tools, or restructuring when they run in the pipeline have more impact than adding rules?
   - Would a new file (e.g., a reference document with concrete examples, a checklist the generator loads, a formula library) serve better than inline instructions?
+  - Would a custom skill help? Use /skill-creator to create reusable skills that the generator or its agents can invoke. Skills are good for repeatable multi-step procedures (e.g., a balance-testing protocol, a UI review checklist, a simulation-verification workflow).
 
 Write your architectural assessment in your thinking. If the current architecture is adequate, say so and explain why. If it isn't, restructure BEFORE making content changes.
 
