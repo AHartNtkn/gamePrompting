@@ -351,6 +351,9 @@ Do NOT generate or audit a game. Only modify the generator files and commit."
 
     log "  $THESIS"
 
+    # Push after modify so changes aren't lost if the loop is killed
+    git push origin master 2>/dev/null || log "  WARNING: git push failed"
+
     fi  # end skip-to check for modify step
 
     # ------------------------------------------------------------------
