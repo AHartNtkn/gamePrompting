@@ -97,3 +97,12 @@ When other agents (AI factions, NPC turns, etc.) are acting, examine what the pl
 - Is downtime duration proportional to its informational value?
 
 Score 0 if the player sits idle during other agents' turns with nothing to see, think about, or learn from. Score 2 if some information is available during downtime but it is not well-presented or the downtime is disproportionately long. Score 4 if downtime is productive — the player observes meaningful events, gathers information, and plans their next action, making the wait feel like an active part of play rather than an interruption.
+
+### J11. Equilibrium Disruption (0-5)
+
+Check whether the game prevents itself from settling into a stable, solved state. Check:
+- Does the game have internal disruption mechanisms — character events, system crises, environmental shifts, factional dynamics — that periodically upset established patterns?
+- Can the player reach a comfortable equilibrium and stay there indefinitely, or do disruptions force continuous adaptation?
+- Do disruptions arise from within the simulation (system interactions, autonomous agents, resource dynamics) rather than from arbitrary external events?
+
+Score 0 if the game reaches a stable equilibrium that the player can maintain indefinitely — once optimized, nothing changes. Score 2 if some disruptions occur but they are infrequent, easily handled, or feel arbitrary rather than systemic. Score 4 if the game consistently generates internal disruptions that prevent equilibrium — the player's established patterns are regularly challenged by events arising from the simulation itself, forcing continuous adaptation and re-optimization.

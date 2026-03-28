@@ -156,3 +156,21 @@ Survey all the decisions in the game and categorize each by how permanent its co
 - Or does the game have a flat permanence profile — all decisions equally reversible or all equally permanent?
 
 Score 0 if the game has a flat permanence profile — all decisions are equally reversible (no stakes) or equally permanent (no experimentation), with no graduation. Score 2 if some variation in permanence exists but it is not well-distributed or well-matched to decision weight. Score 4 if the game provides a deliberate spectrum from easily reversible decisions (enabling experimentation) through costly-to-reverse decisions (creating stakes) to fully permanent decisions (creating weight), with the permanence level matching the significance of each decision.
+
+### D18. Routine Activity Interest (0-5)
+
+Identify the activities the player performs most frequently — the ones that fill the majority of playtime. Check:
+- Do these high-frequency activities involve genuine choices each time they're performed?
+- Or are they rote execution — the same sequence of inputs with the same obvious answer every time?
+- Would the game improve if these routine activities were automated, or are they engaging in themselves?
+
+Score 0 if the majority of playtime is spent on mechanically repetitive activities with no decision content — the player is doing busywork between the occasional interesting moment. Score 2 if routine activities have some variation but the choices they present are shallow or obvious. Score 4 if even the most frequently performed activities involve genuine situational decisions — the player is always thinking, never just executing.
+
+### D19. Mundane-to-Critical Cascade Potential (0-5)
+
+Check whether routine, low-stakes actions can trigger escalating consequences. Check:
+- Can an ordinary action (moving, searching, trading, crafting) cascade into a critical situation through system interactions?
+- Does this cascade potential create genuine tension during mundane activities?
+- Or are routine actions isolated from the game's dramatic systems — safe, predictable, and consequence-free?
+
+Score 0 if routine actions never cascade — mundane activities are completely safe and disconnected from the game's high-stakes systems. Score 2 if cascades occasionally occur but are rare or feel arbitrary rather than following from system interactions. Score 4 if the game creates genuine tension in everyday activities because routine actions have real cascade potential through interconnected systems — the player can never fully disengage.

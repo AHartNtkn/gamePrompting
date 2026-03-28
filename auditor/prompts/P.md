@@ -119,3 +119,22 @@ Examine the game's persistence model. Check:
 - Can the player determine what will be lost if they quit at any point?
 
 Score 0 if the persistence model is opaque — the player cannot determine whether their progress is saved, whether quitting will lose progress, or whether death is permanent until they experience data loss. Score 2 if the persistence model is partially communicated — the player knows saves exist but isn't sure when they occur or what they capture. Score 4 if the persistence model is fully transparent — the player always knows whether their progress is saved, what a save captures, and what the consequences of quitting or dying are.
+
+### P13. Output Proportionality (0-5)
+
+Compare the length and detail of game output across different event types. Check:
+- Do trivial, routine actions (moving to a visited location, performing a repeated task) produce brief confirmations?
+- Do significant events (discoveries, battles, state changes) receive detailed descriptions?
+- Does a revisited location get an abbreviated description while a new significant area gets a full one?
+- Or is every output approximately the same length regardless of importance?
+
+Score 0 if all outputs are the same length regardless of significance — walking to an adjacent room produces as much text as discovering a critical secret. Score 2 if some variation exists but it's inconsistent or the ratio is small. Score 4 if output length clearly scales with importance — routine actions are brief, significant events are detailed, and the player can gauge an event's importance from its output length.
+
+### P14. Tedium Automation (0-5)
+
+Check whether the game automates actions that involve no meaningful decision. Check:
+- Are there repetitive sequences the player must perform manually despite no choice being involved (walking a known path, restocking from a known source, repeating a solved interaction)?
+- Could any of these be handled with a single command or automatically?
+- Does the game preserve the player's cognitive load for genuine decisions by eliminating mechanical busywork?
+
+Score 0 if the player must manually perform long sequences of actions where no decision exists — the game requires busywork that could be automated. Score 2 if some automation exists but significant tedious sequences remain. Score 4 if the game identifies and automates or abbreviates every non-decision action sequence — the player's input is reserved exclusively for genuine choices.

@@ -114,3 +114,21 @@ When the player fails, examine what game state results. Check:
 - Is "losing is fun" a real possibility, or is failure just a gate back to the last checkpoint?
 
 Score 0 if failure always means game-over or full reset — the only response to failure is to start again from scratch. Score 2 if some failures create interesting situations but most still lead to restart or reload. Score 4 if failure regularly produces compelling new game states — lost resources create scarcity decisions, defeated units change strategic options, and the player's story continues through setbacks rather than ending at them.
+
+### H13. Anti-Stall Pressure (0-5)
+
+Check whether the game has a mechanism that prevents indefinite stalling at a comfortable level. Check:
+- Is there a cost to inaction — resource drain, escalating threats, timer, corruption, or environmental degradation?
+- Can the player reach a safe equilibrium and stay there indefinitely, or does the game force them forward into risk?
+- Is the pressure organic (arising from the simulation) or artificial (arbitrary timer)?
+
+Score 0 if the player can stall indefinitely at any comfortable difficulty level — there is no cost to inaction and no pressure to progress. Score 2 if some pressure exists but it's weak or easily circumvented. Score 4 if the game has robust anti-stall pressure that forces the player forward into risk — inaction is costly, safety is temporary, and the game rewards boldness over excessive caution.
+
+### H14. Death Informativeness (0-5) `[CONDITIONAL: game has permadeath or significant failure states]`
+
+When the player dies or suffers a major failure, examine the information presented. Check:
+- Does the game show what killed the player and the chain of decisions that led there?
+- Can the player identify specific mistakes to avoid next time?
+- Is the post-mortem itself a learning tool — showing stats, timeline, cause of death, and key decision points?
+
+Score 0 if death provides no information — the player has no idea what went wrong or how to improve. Score 2 if the cause of death is stated but the chain of decisions leading to it is unclear. Score 4 if the game presents a detailed post-mortem that identifies the cause, traces the decision chain, and gives the player specific actionable knowledge for their next attempt.

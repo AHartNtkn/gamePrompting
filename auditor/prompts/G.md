@@ -80,3 +80,12 @@ Examine how the economy changes over the course of a play session. Check:
 - Or is the economy static — the same items at the same prices with the same resource flows from start to finish?
 
 Score 0 if the economy is completely static — nothing about resource availability, costs, or flows changes over the course of the game. Score 2 if some economic changes occur (e.g., new items become available at fixed intervals) but the player doesn't need to adapt their resource strategy. Score 4 if the economy is genuinely dynamic — resource availability, costs, and trade-offs shift in response to player actions and world events, requiring the player to continuously reevaluate their resource strategy.
+
+### G9. Attention as Resource (0-5) `[CONDITIONAL: game has multiple simultaneous management domains]`
+
+Check whether the player's cognitive bandwidth is a binding constraint. Check:
+- Are there more systems demanding oversight than the player can simultaneously manage?
+- Does neglecting a system produce consequences — does the unattended system degrade, fail, or create problems?
+- Does the game force the player to prioritize which systems to focus on, with the awareness that neglected systems will suffer?
+
+Score 0 if the player can comfortably monitor all systems simultaneously with no prioritization needed. Score 2 if multiple systems exist but neglecting some has minimal consequences — the player can effectively manage everything. Score 4 if the player's attention is genuinely scarce — there are always more systems demanding focus than the player can handle, and neglected systems produce real consequences that force difficult prioritization decisions.

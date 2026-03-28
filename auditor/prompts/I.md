@@ -121,3 +121,21 @@ Examine how the player's capabilities change over time. Check:
 - Can the player approach old problems in new ways as they progress, or do they just do the same thing harder?
 
 Score 0 if progression is purely vertical — bigger numbers replace smaller numbers, old equipment becomes worthless, and late-game play is mechanically identical to early-game play with inflated values. Score 2 if progression is mostly vertical but some new options emerge. Score 4 if progression primarily expands the player's option space — new capabilities open new strategies, early tools remain useful in specific contexts, and the player's repertoire grows rather than their power level.
+
+### I14. Spoiler Independence (0-5)
+
+Check whether the game can be understood using only in-game information. Check:
+- Can a player who has never consulted external resources understand the game's mechanics through observation and experimentation?
+- Are item effects, enemy behaviors, and system interactions discoverable during play?
+- Or does competent play require knowledge that can only be obtained from wikis, guides, or community knowledge bases?
+
+Score 0 if the game is effectively incomprehensible without external documentation — mechanics are opaque, item effects are arbitrary, and understanding requires a wiki. Score 2 if most mechanics are discoverable through play but some key interactions remain opaque without external help. Score 4 if the game is fully playable through in-game information alone — all mechanics are discoverable through observation and experimentation, even if external knowledge provides additional advantage.
+
+### I15. Strategy Headroom (0-5)
+
+Assess the magnitude of the gap between skilled and unskilled play. Check:
+- How much better does an expert play compared to a novice facing the same situation?
+- Do strategic and tactical choices have large effects on outcome probability?
+- Can an expert articulate WHY their approach differs from a novice's and point to specific decisions that matter?
+
+Score 0 if choices have negligible impact on outcomes — a novice and expert perform approximately the same because the game's variance overwhelms player skill. Score 2 if skill matters somewhat but the gap between good and bad play is small — choices matter at the margin. Score 4 if the gap between expert and novice play is enormous — skilled players dramatically outperform unskilled ones, and experts can point to specific decision patterns that account for their advantage.

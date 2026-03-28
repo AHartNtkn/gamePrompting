@@ -57,3 +57,21 @@ Trace a single playthrough from beginning to end. Check:
 - Are there distinct transitions between phases — moments where the game's character changes?
 
 Score 0 if the game feels the same from beginning to end — the same decisions, the same priorities, the same rhythm throughout. Score 2 if there is some evolution over the course of a playthrough but it is gradual and doesn't fundamentally change what the player is doing. Score 4 if the game has clearly distinct phases that each feel like a different game within the same system — different resources matter, different strategies are viable, and the player's focus shifts meaningfully.
+
+### R7. Procedural Tactical Differentiation (0-5) `[CONDITIONAL: game uses procedural generation]`
+
+Examine whether procedurally generated content demands different strategies. Check:
+- Do different generated layouts, encounters, or situations require the player to adapt their approach?
+- Or does the same strategy work regardless of what's generated — the variation is cosmetic, not tactical?
+- Can the player look at a generated situation and say "this requires a different approach than the last one"?
+
+Score 0 if generated content is tactically identical despite visual variation — the same strategy works for every generated situation. Score 2 if some generated situations demand adaptation but most are approachable with a single default strategy. Score 4 if procedural generation consistently creates tactically distinct situations that require the player to read the environment, assess the specific challenge, and choose an approach tailored to this particular instance.
+
+### R8. Graduated Victory Conditions (0-5) `[CONDITIONAL: game has defined victory/completion]`
+
+Check whether the game offers objectives at different mastery levels. Check:
+- Is there a baseline victory condition accessible to competent players?
+- Are there optional harder goals that become visible once the basics are mastered — alternative endings, challenge objectives, optional dangerous content, scoring dimensions?
+- Does the game provide a ladder of increasingly ambitious objectives that reward deeper engagement?
+
+Score 0 if the game has a single victory condition with no graduation — you either win or you don't, with no intermediate or advanced goals. Score 2 if some optional objectives exist but they don't represent meaningfully different mastery levels. Score 4 if the game provides a clear ladder of victory conditions at different mastery levels — a basic win is achievable for competent players, while expert players can pursue significantly harder optional objectives that demand deeper knowledge and skill.

@@ -123,3 +123,12 @@ Evaluate whether the game world treats the player as the center of everything or
 - Is the player one participant in a world that would continue without them, or is the player the axis around which the entire simulation rotates?
 
 Score 0 if the player is the center of the universe — nothing happens without the player's involvement, all events revolve around the player, and the world has no independent existence. Score 2 if some independent activity occurs but most significant events are triggered by or directed at the player. Score 4 if the game world actively generates events, conflicts, and developments independent of the player — the player is one actor among many in a world that operates on its own terms.
+
+### C14. Subordinate Agent Autonomy (0-5) `[CONDITIONAL: game has entities the player directs]`
+
+If the player commands, manages, or directs other entities (employees, soldiers, colonists, units), check whether those entities exercise independent judgment. Check:
+- Do subordinates interpret orders through their own capabilities, moods, and priorities rather than executing them mechanically?
+- Do they ever refuse, delay, underperform, or pursue their own agenda in ways that create interesting tension?
+- Does this autonomy enhance gameplay (forcing the player to manage rather than micromanage) or merely frustrate (random disobedience with no player recourse)?
+
+Score 0 if subordinates are perfectly obedient automatons — they execute every order exactly as given with no independent behavior. Score 2 if some autonomy exists but it's shallow (random failure chance) or purely frustrating (disobedience with no counterplay). Score 4 if subordinates have genuine agency that enriches gameplay — the player must account for their abilities, moods, and priorities, creating management decisions that feel like leading people rather than programming robots.

@@ -107,3 +107,12 @@ Examine the player's subjective experience of control. Check:
 - Does the player feel like the driver of their fate, or a passenger on a random ride?
 
 Score 0 if the player has no sense of control — outcomes feel entirely determined by randomness and player decisions feel like they don't matter. Score 2 if the player feels some control but specific moments feel unfairly random (e.g., a critical hit decides the final battle, invalidating all prior strategy). Score 4 if the player consistently feels that their choices are the primary determinant of outcomes — randomness adds variety and challenge but never overrides good play.
+
+### F12. Pre-Action vs. Post-Action Randomness (0-5)
+
+Examine when randomness resolves relative to the player's decisions. Check:
+- Is randomness primarily front-loaded? (The player is dealt a random situation — procedural layout, random hand, environmental conditions — and must decide how to respond.)
+- Or is randomness primarily back-loaded? (The player chooses an action and then randomness determines whether it succeeds — hit chance, dodge roll, random outcome.)
+- Which type dominates the player's experience of uncertainty?
+
+Score 0 if randomness is entirely back-loaded — the player chooses actions and then waits for the dice to decide if they worked, with no opportunity to adapt to random circumstances. Score 2 if both types are present but back-loaded randomness dominates the player's experience of uncertainty. Score 4 if randomness is primarily front-loaded — the player faces random situations and must decide how to handle them, with the outcome primarily determined by their response rather than by further randomness.
