@@ -106,3 +106,30 @@ Examine whether the game's macro-level patterns — phases, difficulty progressi
 Compare: In Project Zomboid, early game is looting-focused because you have nothing, mid game shifts to base-building because you've accumulated enough to defend, late game shifts because scarcity changes character. No trigger — just systems reaching different equilibria. Contrast with a game that plays identically every turn until `if turn >= 15: unlock_advanced_buildings()`.
 
 Score 0 if the game's macro structure is entirely scripted — phases, difficulty, and progression changes are all triggered by hardcoded conditions rather than arising from system dynamics. Score 2 if some structural emergence exists (e.g., resource depletion naturally changes priorities) but the game also relies on scripted triggers for major transitions. Score 4 if the game's phases, difficulty curve, and progression arc arise entirely from system interactions — removing all explicit phase/difficulty scripting would not flatten the experience because the systems themselves produce natural differentiation.
+
+### B12. Simulation Perceptibility (0-5)
+
+For every system the game simulates, check whether its effects are observable through normal play. Check:
+- Can the player detect that the system exists without reading documentation or source code?
+- Does the system produce visible consequences — changes in output, available options, or game state that the player can observe?
+- Are there systems running "under the hood" that never surface in the player's experience?
+
+Score 0 if multiple simulated systems have no player-visible effects — they compute internally but produce nothing the player can observe or react to. Score 2 if most systems produce visible effects but some remain invisible despite being mechanically active. Score 4 if every simulated system produces observable effects that the player can detect, learn from, and factor into their decisions.
+
+### B13. Narrative Prompt Density (0-5) `[CONDITIONAL: game has enough systemic breadth for narrative emergence]`
+
+Examine whether the simulation produces events that invite player interpretation. Check:
+- Are events specific enough to be meaningful (involving particular entities, specific causes, concrete consequences)?
+- Are events ambiguous enough to leave room for the player to construct their own narrative?
+- Does the game over-specify what happened (leaving nothing to interpret) or under-specify (events so generic they prompt no imagination)?
+
+Score 0 if the simulation produces events that are either completely generic ("something happened") or completely narrated ("you felt terror as the dark lord's curse struck you, reminding you of your tragic past") — neither prompts player imagination. Score 2 if some events invite interpretation but most are either too generic or too prescriptive. Score 4 if the simulation consistently produces events that are concrete and specific but narratively open — the player naturally wants to construct a story around what happened.
+
+### B14. Entity Narrative Specificity (0-5) `[CONDITIONAL: game has individually simulated entities]`
+
+When events involve game entities (characters, units, creatures, factions), check whether the events are specific to those particular entities. Check:
+- Do entities have distinguishing properties (history, preferences, relationships, skills) that affect how events involving them play out?
+- Would the same event involving a different entity produce a different outcome or feel different?
+- Or could any entity be swapped for any other without changing the event at all?
+
+Score 0 if entities are interchangeable — events happen TO generic slots, not to specific characters with specific properties. Score 2 if entities have some distinguishing features but these rarely affect events. Score 4 if entities are deeply differentiated and events are specific to the particular entities involved — their histories, properties, and relationships shape what happens and how.

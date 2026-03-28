@@ -43,8 +43,8 @@ Are the underlying formal rules (math, algorithms, probability distributions) we
 *(Salen/Zimmerman)*
 
 **A9. Mechanic-Aesthetic Alignment**
-Do the mechanics actually produce the experience the game appears to be going for? Or do the systems generate dynamics at odds with the apparent intent?
-*(MDA — cross-layer coherence)*
+Do the mechanics actually produce the experience the game appears to be going for? Or do the systems generate dynamics at odds with the apparent intent? If you stripped all flavor text and renamed every element generically, would the game still communicate what it's "about" through its systems alone?
+*(MDA — cross-layer coherence; Johnson "theme is not meaning" — meaning comes from mechanics, not setting)*
 
 **A10. Lusory Attitude Reward**
 Does the game reward players who engage with it in the spirit of play? Or does engaging earnestly put you at a disadvantage compared to exploiting the rules?
@@ -100,6 +100,18 @@ Can the player predict the outcome of novel system interactions by reasoning fro
 Do the game's macro-level patterns — phases, difficulty progression, pacing arcs — arise from its systems, or are they imposed by special-case logic? In a well-designed simulation, early/mid/late game feel different because the systems naturally reach different equilibria (resource depletion shifts priorities, capability accumulation opens new strategies, environmental pressure changes the viable action space), not because scripted triggers change the rules at predetermined points. If removing all phase/difficulty scripting would cause the game to feel undifferentiated, the systems aren't doing their job.
 *(Player experience gap — Project Zomboid, Dwarf Fortress, RimWorld: phases emerge from systems reaching different equilibria, never from scripted triggers. Distinct from J7 Arc Structure which asks whether phases exist; this asks whether they're earned by the simulation or imposed on it)*
 
+**B12. Simulation Perceptibility**
+Does every simulated system produce player-observable effects? Can the player detect each system's existence and infer its behavior through normal play, without documentation? A system that operates but whose effects are invisible to the player is wasted computation — it contributes nothing to the player's mental model and might as well not exist.
+*(Sylvester "Player Model Principle" — anything in the Game Model that doesn't copy into the Player Model is worthless. Distinct from E1 Data Transparency (can you see state) and S2 Decorative Systems (stats with no mechanical effect) — a system can have mechanical effect and still be imperceptible to the player)*
+
+**B13. Narrative Prompt Density** `[CONDITIONAL: game has enough systemic breadth for narrative emergence]`
+Does the simulation produce events that are specific enough to be meaningful but ambiguous enough to invite player interpretation? Does the game leave narrative gaps for the player to fill, rather than over-specifying every event's meaning? The simulation doesn't need to produce complete stories — it needs to produce sequences that the player's mind completes through apophenia.
+*(Sylvester apophenia, Adams collaboration with player imagination, Wright "player imagines the simulation is better." Distinct from K10/K11 Narrative Emergence which ask whether story-worthy events occur — this asks whether the game calibrates specificity vs. ambiguity to leverage the player's imagination)*
+
+**B14. Entity Narrative Specificity** `[CONDITIONAL: game has individually simulated entities]`
+Are emergent events specific to the particular entities involved — their histories, properties, relationships — or are they generic events that could have happened to any interchangeable entity? "A colonist died" is a system event. "Urist, who hated rain and loved plump helmets, died of thirst because she refused to cross an outdoor bridge during a drizzle" is a story.
+*(Adams narrative specificity, Paradox character-driven design, Solomon permadeath attachment. Distinct from K10 which asks whether events are story-worthy — this asks whether they're specific to the entities involved)*
+
 ---
 
 ## C. World & Simulation
@@ -147,8 +159,8 @@ Does the game world operate independently of the player's attention? Do events, 
 *(Player experience gap — Harvey Smith on systemic design; widely cited in Dwarf Fortress, Rimworld, Kenshi praise)*
 
 **C11. Simulation Honesty**
-Does the game produce outcomes strictly from its stated rules? Are there hidden adjustments — rubber-banding, invisible difficulty scaling, secret probability modifiers, fudged rolls? Can the player trust that the numbers shown are the numbers used?
-*(Player experience gap — distinct from E1 Data Transparency (can you see the state) and Q3 AI Fairness (does AI cheat); this asks whether the game's stated rules are its actual rules)*
+Does the game produce outcomes strictly from its stated rules? Are there hidden adjustments — rubber-banding, invisible difficulty scaling, secret probability modifiers, fudged rolls? Can the player trust that the numbers shown are the numbers used? Does the game world follow its rules uniformly regardless of player state — the world is indifferent, not accommodating?
+*(Player experience gap — distinct from E1 Data Transparency (can you see the state) and Q3 AI Fairness (does AI cheat); this asks whether the game's stated rules are its actual rules. Spelunky: "the world is indifferent" — rules apply uniformly regardless of whether the player is a novice or expert)*
 
 **C12. Player-World Ontological Parity**
 Is the player an entity *within* the simulation, subject to the same ontological category as other entities? Can the player die to the same hazards as NPCs, have structures damaged the same way? Or is the player a privileged outsider the simulation treats as a special case?
@@ -157,6 +169,10 @@ Is the player an entity *within* the simulation, subject to the same ontological
 **C13. Player De-Centering** `[CONDITIONAL: game has a world with independent actors beyond the player]`
 Does the game avoid making the player the center of the universe? Do events happen without the player's involvement? Do factions pursue their own agendas regardless? Is the player one actor among many, not the axis around which the world rotates?
 *(Player experience gap — opposes L3 Player-as-Star; captures what simulation-focused players mean by "the world doesn't care about you" as praise)*
+
+**C14. Subordinate Agent Autonomy** `[CONDITIONAL: game has entities the player directs]`
+Do entities under the player's nominal control exercise independent judgment, priorities, or resistance? Does the player give orders to agents who interpret those orders through their own capabilities, moods, and priorities rather than executing them mechanically? Does this autonomy create interesting tension rather than pure frustration?
+*(Adams "dwarves exercise autonomy outside official duties," Paradox "AI isn't here to win, it's here to roleplay," management game delegation research. Distinct from C10 World Autonomy (world moves without player) and Q2 AI Personality (AI entities behave distinctly) — this is specifically about the player's OWN subordinates having agency)*
 
 ---
 
@@ -231,6 +247,14 @@ Can plans be disrupted by unforeseen events, requiring adaptation? Or can the pl
 **D17. Consequence Irreversibility Spectrum**
 Does the game provide a graduated range of consequence permanence? Some decisions easily reversible (allowing experimentation), some costly to reverse (creating stakes), some permanent (creating weight)? Is this spectrum intentional and well-distributed across the game?
 *(Player experience gap — D10 evaluates individual choices; this evaluates the distribution of permanence across the game)*
+
+**D18. Routine Activity Interest**
+Are the game's most frequently performed activities — the ones comprising the majority of playtime — mechanically engaging in themselves? Or is the player grinding through routine to reach occasional interesting decisions? Every activity the player repeats many times should involve a genuine choice.
+*(Zomboid mundane tasks as core gameplay, DCSS "no tedium," Cogmind automate obvious choices, Factorio real-world problem analogs. Distinct from D1 Decision-Making Centrality and J2 Dead Time Absence — this asks whether high-frequency routine actions are themselves interesting)*
+
+**D19. Mundane-to-Critical Cascade Potential**
+Can routine, low-stakes actions trigger chains of consequences that escalate to critical situations? Is there genuine tension in everyday decisions because of their catastrophic potential? In well-designed simulations, routine foraging can lead to a zombie horde encounter; a minor diplomatic insult can cascade into war.
+*(Zomboid, Spelunky, Adams "can a story thread pass through this feature?" Distinct from B5 Chain Reaction Potential which frames cascades in terms of dramatic events — this asks whether MUNDANE actions have cascade potential)*
 
 ---
 
@@ -356,6 +380,10 @@ Is the ratio of skill-based outcomes to luck-based outcomes appropriate for the 
 Does the player feel their choices matter more than luck? Even with randomness present, does skill determine long-run outcomes?
 *(Player agency research)*
 
+**F12. Pre-Action vs. Post-Action Randomness**
+Is randomness primarily front-loaded (the player is dealt a random situation and must decide how to respond) or back-loaded (the player chooses an action and randomness determines if it succeeds)? Front-loaded randomness creates decision-rich situations with clear agency; back-loaded randomness creates slot-machine feel.
+*(Roguelike practitioner consensus, Spelunky, Cogmind. Distinct from F4 and F11 — this asks WHEN randomness resolves relative to the player's decision point)*
+
 ---
 
 ## G. Economy & Resource Design `[CONDITIONAL: game has economy/resources]`
@@ -393,6 +421,10 @@ Do game objects have value that is meaningful within the game's internal logic? 
 **G8. Economic Dynamism**
 Does the economy change over time? Do prices, scarcity, and availability shift based on player and world actions?
 *(Economy design research)*
+
+**G9. Attention as Resource** `[CONDITIONAL: game has multiple simultaneous management domains]`
+Does the game treat the player's attention as a binding constraint? Are there more systems demanding oversight than the player can simultaneously manage, forcing prioritization of focus? Does neglecting a system produce consequences?
+*(Johnson Old World's Orders system, Paradox multi-front management, management game research. Distinct from D15 and G1 — this identifies the player's own attention as the binding constraint)*
 
 ---
 
@@ -447,6 +479,14 @@ Is the player protected from instant-kill outcomes during reasonable play? Are l
 **H12. Failure Generativity**
 When the player fails, does the failure produce an interesting new game state rather than simply ending or resetting? Can the player lose a battle but continue the war? Do failed states generate their own emergent gameplay? ("Losing is Fun" — Dwarf Fortress)
 *(Player experience gap — H8 asks if failure is informative; L5 asks if it's recoverable; this asks whether failure creates new, playable situations)*
+
+**H13. Anti-Stall Pressure**
+Does the game have a mechanism that prevents the player from stalling indefinitely at a comfortable difficulty level? Is there an inherent cost to inaction or excessive caution — resource drain, escalating threats, timer, corruption, or other pressure that forces forward into risk?
+*(Harris Anti-Grind Rule and Race You Can't Win Rule, DCSS food clock, ADOM corruption, Spelunky ghost timer. Distinct from O7 and H4 — this asks whether there is a mechanism that punishes STALLING)*
+
+**H14. Death Informativeness** `[CONDITIONAL: game has permadeath or significant failure states]`
+When the player dies or suffers a major failure, does the game present enough information for them to understand what killed them and how to avoid it next time? Is the death screen / post-mortem itself a learning tool?
+*(Roguelike practitioner consensus, DCSS philosophy. Distinct from H8 Failure Informativeness — this is specifically about POST-MORTEM information presentation in high-stakes games)*
 
 ---
 
@@ -506,6 +546,14 @@ Does the game gate progression primarily through player knowledge and understand
 Does progression expand the player's option space (more tools, more approaches, more situations they can handle) rather than increasing power level (bigger numbers)? Does late-game gear make early-game gear obsolete, or does it remain situationally relevant?
 *(Player experience gap — no existing criterion distinguishes vertical (power) from horizontal (options) progression)*
 
+**I14. Spoiler Independence**
+Can the game be understood, played competently, and completed using only in-game information? Are mechanics, item effects, enemy behaviors, and system interactions discoverable through observation and experimentation during play?
+*(DCSS "playable without the aid of a guide or wiki," Brogue transparent mechanics, NetHack4, Golden Krone Hotel burden-of-knowledge. Distinct from E1 Data Transparency — this asks whether a player who has NEVER consulted external resources can make informed decisions)*
+
+**I15. Strategy Headroom**
+How large is the gap between optimal and naive play? Do strategic and tactical choices have large effects on outcome probability, such that a skilled player dramatically outperforms an unskilled one?
+*(NetHack4/Alex Smith "strategy headroom," DCSS "skill must make a real difference," Johnson situational decisions. Distinct from I3 Mastery Depth and I9 Skilled Play Rewarded — this quantifies the MAGNITUDE of the difference)*
+
 ---
 
 ## J. Pacing & Rhythm
@@ -552,6 +600,10 @@ When the player repeats activities (which is inevitable in open-ended games), do
 In multi-agent situations (AI factions, etc.), is downtime while others act managed well? Does the player have something to think about or observe during waits?
 *(Board game research — BGG)*
 
+**J11. Equilibrium Disruption**
+Does the game have mechanisms that prevent it from settling into a solved, stable state? Do internal disruptions periodically upset the player's established patterns and force adaptation? A simulation that reaches equilibrium and stays there is effectively over even if it's still running.
+*(Johnson "characters disrupt equilibrium," management research, Sylvester AI storyteller. Distinct from J4 Escalation and J5 Front-Loading Resistance — this asks whether the game ACTIVELY DISRUPTS equilibrium)*
+
 ---
 
 ## K. Engagement & Compulsion
@@ -579,8 +631,8 @@ Does the game continue to present novel situations over time? Or does it exhaust
 *(Schell — Lens #24)*
 
 **K6. Autotelic Quality**
-Is the activity intrinsically rewarding — fun for its own sake, not just as a means to an external goal?
-*(Flow theory — autotelic experience)*
+Is the activity intrinsically rewarding — fun for its own sake, not just as a means to an external goal? Is the core system interesting to manipulate even without goals — would a player want to poke at the simulation to see what happens, before any objectives are layered on?
+*(Flow theory — autotelic experience; Wright "toy first, game second")*
 
 **K7. Absorption Potential**
 Does the game create conditions where the player can become fully absorbed — losing track of time and self-awareness?
@@ -852,6 +904,14 @@ Is the player's current status always visible or easily accessible? Can they che
 Is the persistence model clear? Does the player know whether the game auto-saves, uses permadeath, or allows free saves?
 *(CLI research)*
 
+**P13. Output Proportionality**
+Is the length and detail of game output proportional to the importance of the event described? Do trivial actions produce brief confirmations while significant events receive detailed descriptions?
+*(IF, MUD, roguelike traditions — universal cross-tradition principle. Distinct from P5 and E3 — this asks whether output LENGTH dynamically scales with importance)*
+
+**P14. Tedium Automation**
+Does the game automate or abbreviate actions that involve no meaningful decision? Are repetitive non-choice sequences handled automatically or with a single command?
+*(DCSS auto-explore, Cogmind automated inventory, Graham Nelson Player's Bill of Rights. Distinct from P4 Input Efficiency — this asks whether the game identifies and automates SEQUENCES where no decision exists)*
+
 ---
 
 ## Q. AI & Opposition `[CONDITIONAL: game has AI agents/opponents]`
@@ -863,8 +923,8 @@ Does the AI behave in ways that seem rational and intentional? Does it make deci
 *(PLAY heuristics)*
 
 **Q2. AI Personality**
-Do different AI entities behave in observably different ways based on their attributes, goals, or faction identity?
-*(Emergent narrative research)*
+Do different AI entities behave in observably different ways based on their attributes, goals, or faction identity? Does AI behavior reflect personality and character rather than optimal play — do AI actors roleplay their identity rather than uniformly pursuing the best strategy?
+*(Emergent narrative research; Paradox "the AI isn't here to win, it's here to roleplay")*
 
 **Q3. AI Fairness**
 Does the AI play by the same rules as the player? Or does it cheat (omniscient, unlimited resources, etc.)?
@@ -907,6 +967,14 @@ After many playthroughs, is the game still worth playing? How many runs until th
 **R6. Phase Differentiation**
 Do different phases of a single playthrough (early/mid/late game) feel meaningfully different from each other?
 *(4X research — phase balance, Burgun — arc structure)*
+
+**R7. Procedural Tactical Differentiation** `[CONDITIONAL: game uses procedural generation]`
+Does procedurally generated content demand different strategies, not just present different layouts? Do generated situations create tactically distinct challenges requiring adaptation?
+*(Cogmind hybrid generation, Spelunky, Golden Krone Hotel. Distinct from R1 and C4 — this specifically asks whether variation is TACTICALLY significant)*
+
+**R8. Graduated Victory Conditions** `[CONDITIONAL: game has defined victory/completion]`
+Does the game offer multiple victory conditions at different mastery levels? Beyond the baseline win, are there optional harder goals for expert players?
+*(Cogmind, DCSS optional runes, ADOM multiple endings, Brogue lumenstones. Distinct from T5 and T4 — this asks for a LADDER of increasingly difficult formal objectives)*
 
 ---
 

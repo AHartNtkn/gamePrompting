@@ -210,6 +210,18 @@ Check: Is morale a single 0-100 scalar with no interacting dimensions? If yes, F
 **S60. Scripted Phase Triggers**
 Check: Search for conditionals keyed on turn number, elapsed time, cumulative score, or fixed thresholds that change game rules, unlock content, or alter difficulty (e.g., `if turn >= 10`, `if score >= 100`). If the game's phase structure would disappear entirely if these conditionals were removed — because the underlying systems produce no natural differentiation on their own — FAIL.
 
+**S61. Described-But-Not-Interactable Nouns**
+Check: Pick 5 nouns mentioned in environmental/scene descriptions (objects, features, entities). Attempt to examine or interact with each. If >50% produce "I don't understand" or have no interaction handler, FAIL.
+
+**S62. Emotional Narration**
+Check: Search game output for phrases where the game tells the player what their character feels: "you feel terrified," "a sense of dread washes over you," "you are amazed." If >3 instances of emotion-labeling occur in a normal play session, FAIL.
+
+**S63. Uniform Output Length**
+Check: Compare output length for 5 routine actions vs. 5 significant events. If the ratio is <1.5x (significant events don't produce noticeably more text than routine ones), FAIL.
+
+**S64. Wiki-Required Mechanics**
+Check: Identify the 3 most complex mechanics in the game. For each, determine whether a player could understand it through in-game information and experimentation alone. If any mechanic is opaque without external documentation, FAIL.
+
 ## Output Format
 
 Output your results in exactly this format:

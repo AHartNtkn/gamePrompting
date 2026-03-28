@@ -367,6 +367,26 @@ Pattern: The game uses hardcoded turn counts, timers, or threshold checks to art
 Why: LLMs default to scripted triggers because they're the simplest way to create the appearance of phases. In a well-designed simulation, phases emerge because systems naturally reach different equilibria — resource depletion shifts priorities, capability accumulation opens strategies, environmental pressure changes the viable action space. Scripted triggers bypass the simulation and undermine the coherence that makes simulations compelling.
 Detection: Search for conditionals keyed on turn number, elapsed time, cumulative score, or fixed thresholds that change game rules, unlock content, or alter difficulty. If the game's phase structure would disappear entirely if these conditionals were removed (because the underlying systems produce no natural differentiation), FAIL.
 
+**S61. Described-But-Not-Interactable Nouns**
+Pattern: Location or scene descriptions mention specific objects, features, or entities that the player cannot examine, interact with, or reference in commands.
+Why: LLMs generate atmospheric descriptions by listing objects, then implement interaction handlers separately. The description and the interactable object model diverge, creating false affordances.
+Detection: Pick 5 nouns mentioned in environmental descriptions. Attempt to examine or interact with each. If >50% produce "I don't understand" or equivalent, FAIL.
+
+**S62. Emotional Narration**
+Pattern: The game tells the player what their character feels rather than describing what exists. "You feel a chill of terror," "An overwhelming sense of dread washes over you."
+Why: LLMs default to emotion-labeling because training data is full of narrative prose that names emotions. Good text game design describes the world and lets the player supply the emotion.
+Detection: Search game output for phrases matching "you feel [emotion]," "a sense of [emotion]," "you are [emotion-adjective]." If >3 instances occur in a normal play session, FAIL.
+
+**S63. Uniform Output Length**
+Pattern: Every game output is approximately the same length regardless of what happened. Walking to an adjacent room produces the same amount of text as discovering a critical secret.
+Why: LLMs generate outputs of similar length because they have no internal model of event significance.
+Detection: Compare output length for 5 routine actions vs. 5 significant events. If the ratio is <1.5x, FAIL.
+
+**S64. Wiki-Required Mechanics**
+Pattern: The game has mechanics whose effects cannot be understood through in-game observation or experimentation.
+Why: LLMs implementing roguelike-style games often import complex mechanics from existing games without providing the in-game information systems that make those mechanics discoverable.
+Detection: Identify the 3 most complex mechanics. For each, determine whether a player could understand it through in-game information alone. If any is opaque without external knowledge, FAIL.
+
 ---
 
 ## Summary
@@ -382,8 +402,8 @@ Detection: Search for conditionals keyed on turn number, elapsed time, cumulativ
 | VII. World Autopilot | 8 | Autocomplete settings/narrative |
 | VIII. Structural Autopilot | 5 | Template structures |
 | IX. Untested Gameplay | 8 | Works in code, broken in play |
-| X. Miscellaneous | 7 | Other red flags |
-| **Total** | **59** | |
+| X. Miscellaneous | 11 | Other red flags |
+| **Total** | **63** | |
 
 ### Usage Note
 
