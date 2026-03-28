@@ -306,16 +306,42 @@ ${AUDIT_CONTEXT}
 
 ## Instructions
 
-1. Read the journal, results history, and audit feedback above.
-2. Read the current generator files (game-creation-prompt.md and agents/*.md) and any other files under generator/.
-3. Form a thesis: what changes will improve the score? Think about patterns across iterations, not just the last result. Be ambitious — each iteration is expensive, so make changes proportional to your confidence.
-4. Implement your changes. You can:
-   - Edit any file under generator/
-   - Create new files (agents, reference docs, examples)
-   - Delete files that aren't helping
-   - Restructure the directory
-5. When done, commit your changes with a descriptive message explaining your thesis.
-6. Output a single line at the very end: THESIS: <one-sentence summary of what you changed and why>
+### Step 1: Architecture Review (do this FIRST, every iteration)
+
+Before considering any specific change, evaluate the current generator ARCHITECTURE:
+
+- Read all files under generator/ — the main prompt, every agent definition, any reference files.
+- Ask: is the current structure the right structure? Consider:
+  - Should any section of the main prompt be extracted into a separate agent that runs as a verification pass?
+  - Are there failure patterns recurring across iterations that would be better caught by a NEW agent than by more text in the existing prompt?
+  - Is the main prompt getting too long? Would splitting it (e.g., separate design-phase and implementation-phase prompts, or genre-specific guidance files) improve focus?
+  - Are the existing agents underutilized? Would changing their instructions, adding new tools, or restructuring when they run in the pipeline have more impact than adding rules?
+  - Would a new file (e.g., a reference document with concrete examples, a checklist the generator loads, a formula library) serve better than inline instructions?
+
+Write your architectural assessment in your thinking. If the current architecture is adequate, say so and explain why. If it isn't, restructure BEFORE making content changes.
+
+**The default is to consider structural change.** Adding more paragraphs to game-creation-prompt.md is the LAST resort, not the first. Every iteration that just appends enforcement text to an already-long prompt is a missed opportunity to improve the system's architecture.
+
+### Step 2: Form a thesis
+
+Based on the journal, audit feedback, and your architectural assessment:
+- What is the highest-leverage change you can make this iteration?
+- Is it a structural change (new agent, restructured pipeline, extracted reference doc) or a content change (revised instructions, new examples, stronger guidance)?
+- Why is this the right level of intervention — why wouldn't a simpler or more ambitious change work better?
+
+### Step 3: Implement
+
+You have full control over everything under generator/:
+- Edit, create, delete, rename, or restructure any files
+- Create new agents with new tools and instructions
+- Split the main prompt into multiple files
+- Add reference documents, example libraries, checklists
+- Change how agents interact and when they're invoked
+
+### Step 4: Commit and report
+
+Commit your changes with a descriptive message explaining your thesis.
+Output a single line at the very end: THESIS: <one-sentence summary of what you changed and why>
 
 Do NOT generate or audit a game. Only modify the generator files and commit."
 
