@@ -201,6 +201,8 @@ Write the updated journal to $JOURNAL using the Write tool. Output nothing else.
     fi
 
     log ""
+    # Clear skip-to after baseline so the main loop runs fully
+    SKIP_TO=""
 fi
 
 # --- Main Loop ---
