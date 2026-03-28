@@ -396,28 +396,39 @@ Do NOT generate or audit a game. Only modify the generator files and commit."
     # Summarize the generation log into a timeline for the evaluate step.
     # Prompt is read from file so it can be edited without restarting the loop.
     SUMMARIZER_PROMPT_FILE="$SCRIPT_DIR/generator/summarizer-prompt.md"
+    GEN_SUMMARY_FILE="$SCRIPT_DIR/generation-summary.md"
     if [[ -s "$SCRIPT_DIR/generation.log" && -f "$SUMMARIZER_PROMPT_FILE" ]]; then
         log "  Summarizing generation log..."
 
-        # generation.log is already compact (truncated at capture time in generate.sh)
         GEN_SUMMARY_PROMPT="$(cat "$SUMMARIZER_PROMPT_FILE")
 
-## Generation Log
-$(cat "$SCRIPT_DIR/generation.log")"
+The generation log is at: $SCRIPT_DIR/generation.log
+Read it using the Read tool.
+
+Write your timeline summary to: $GEN_SUMMARY_FILE
+Use the Write tool to create this file."
 
         GEN_SUMMARY_LOG="$LOG_DIR/gen-summary-iter${ITERATION}.log"
-        run_claude "$GEN_SUMMARY_LOG" "$GEN_SUMMARY_PROMPT" \
-            --model haiku \
-            --tools "Read" \
-            --permission-mode bypassPermissions \
-            || true
 
-        # Extract the summary text from stream-json result
-        GEN_SUMMARY=$(jq -r 'select(.type=="result") | .result // empty' "$GEN_SUMMARY_LOG" 2>/dev/null) || GEN_SUMMARY=""
+        local attempt
+        for attempt in 1 2 3; do
+            run_claude "$GEN_SUMMARY_LOG" "$GEN_SUMMARY_PROMPT" \
+                --model haiku \
+                --tools "Read,Write" \
+                --permission-mode bypassPermissions \
+                || true
 
-        if [[ -n "$GEN_SUMMARY" ]]; then
-            echo "$GEN_SUMMARY" > "$SCRIPT_DIR/generation-summary.md"
-            log "  Generation summary written."
+            if [[ -s "$GEN_SUMMARY_FILE" ]]; then
+                log "  Generation summary written."
+                break
+            fi
+            log "  WARNING: Summarizer produced no output (attempt $attempt/3)"
+            sleep 5
+        done
+
+        if [[ ! -s "$GEN_SUMMARY_FILE" ]]; then
+            log "  ERROR: Summarizer failed after 3 attempts. Stopping loop."
+            exit 1
         fi
     fi
 
