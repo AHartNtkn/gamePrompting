@@ -1,6 +1,6 @@
 # Test Prompts
 
-Five fixed game concepts used for every autoresearch iteration. The same five prompts are given to the game creation prompt each loop, providing consistent evaluation targets across iterations.
+Game concepts used for autoresearch iterations. The loop cycles through all concepts in randomized order.
 
 Design principles for test prompts:
 - **Short and open-ended** — give the AI freedom to pursue ambitious interpretations.
@@ -36,6 +36,36 @@ A political simulation game. The world contains a variety of interacting politic
 ## Prompt 5: Wilderness Survival Expedition
 
 A wilderness survival expedition game. You lead a small party through a large, procedurally generated wilderness toward a distant objective. The environment is the primary antagonist — weather, terrain, wildlife, disease, and resource scarcity. Party members have individual skills, morale, and physical condition. The wilderness has varied biomes with different hazards and resources. Navigation, route planning, and resource management are core decisions. Reaching the objective is success; how many survive and in what condition is the measure of how well you did.
+
+---
+
+## Prompt 6: Gardening & Farm Simulation
+
+A gardening/farm simulation game. Players manage plots of various kinds with an economy driven by demand for different plant products. Plant requirements — including environment, soil acidity, nutrient levels, water needs — should realistically vary by species. Upgrades include automation and employee hiring mechanics. The challenge is balancing crop diversity against specialization, managing soil health over time, and responding to market demand shifts.
+
+---
+
+## Prompt 7: Fishing Vessel Management
+
+A fishing game centered on managing and upgrading a fishing vessel. Method, weather, location, season, and time of day should realistically affect both what is caught and the challenges players face traversing the ocean. The player should be able to scale from a dinky rowboat to a proper ocean-storm-ready vessel. Risk management — knowing when to push further out vs. when to head back — is a core tension.
+
+---
+
+## Prompt 8: Dynasty Strategy
+
+A Paradox-style political strategy game where the player controls a country as a ruler. The player has control over deals, policy, state religion, military, and diplomacy. Evolving relationships, economy, war, and the state of the world can spell doom for your dynasty and power unless the player is competent to navigate these difficulties. Multiple AI-controlled nations operate autonomously with their own agendas.
+
+---
+
+## Prompt 9: Animal Survival
+
+An animal simulation game. Play as one of several species, each with unique mechanics. The goal is to survive and reproduce, facing the natural challenges of nature — weather, hunger, perilous terrain, predators, competitors, and other animals both of the same species and not. Different species face fundamentally different decision spaces (a predator's decisions differ from prey's).
+
+---
+
+## Prompt 10: Sandbox Life Simulation
+
+A sandbox life simulation game. The player can get one of several jobs, manage social relationships, pursue careers and hobbies. Different characters have different life goals, some competing with each other, some complementary. Success is self-defined — there is no single win condition. The simulation should model time passing, relationships evolving, career progression, and the tradeoffs between different life priorities.
 
 ---
 
