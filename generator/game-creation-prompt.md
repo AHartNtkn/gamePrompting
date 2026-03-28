@@ -37,7 +37,7 @@ Before writing code, design the game's systems (write your design to `GAME_OUTPU
 2. **How do systems interact?** For every pair of systems, identify at least one interaction. If two systems don't interact, one of them probably shouldn't exist. Cut systems that don't connect.
 3. **What does a turn look like?** Describe the player's action loop — what information do they see, what choices do they have, what happens after they choose?
 4. **What creates tension?** Identify the sources of pressure, scarcity, or conflict that make decisions difficult. A game without tension is a spreadsheet.
-5. **What varies between playthroughs?** Identify what changes across runs — starting conditions, procedural generation, branching consequences, player strategy.
+5. **What varies between playthroughs?** Identify what changes across runs — starting conditions, procedural generation, branching consequences, player strategy. **At least 4 substantive content elements** (encounter configurations, event sequences, NPC attributes, resource distributions, terrain compositions) must be randomly drawn from a pool each run. The pool must be at least 1.5× the needed content for each variable slot — a pool of exactly the right size is not randomization. A player who has finished 3 runs should still encounter genuinely new situations on their 4th run.
 6. **What are the game's phases?** Name at least three distinct phases (early, mid, late). For each: what triggers the transition into it? What new decisions become available? What old decisions close off or become less important? If you cannot describe concrete differences between phases, the game has no arc — design one before writing code.
 7. **What doesn't the player know?** List at least three things the player must actively discover, infer, or investigate — things NOT displayed by default. What forces the player to commit under uncertainty? What can be learned through play that changes strategy? Hidden information must be discoverable, not permanently opaque.
 
@@ -129,6 +129,22 @@ Then perform this **mandatory pre-delivery checklist** yourself before finishing
 - Verify each one fails at some point in the game. If a trivial strategy wins 80%+ of encounters, add a specific counter-mechanic.
 - The game must not be solvable by a player who has learned only one move, one pattern, or one response.
 
+**Resource accumulation check** (required):
+- List every resource in the game.
+- For each: what is its maximum value? What prevents indefinite hoarding? (Cap, decay, maintenance cost, or diminishing returns — one of these must apply.)
+- Simulate 20 turns of minimum player activity. No resource should exceed a strategically useful amount by more than 20%. If any does, add a cap or decay.
+
+**Zero-cost action audit** (required):
+- List your five most impactful actions — the ones that most change outcomes.
+- Every one must consume a turn resource (AP, stamina, time slot, or equivalent).
+- If any action that directly changes a key outcome (vote commitments, resource gains, enemy state) costs zero turn resources, it is broken. Players will spam it without limit. Fix it before submission.
+
+**Narrative texture check** (required):
+- Read 5 consecutive action outputs from your game.
+- Each output must include: (1) the mechanical result, AND (2) at least one sentence of sensory or interpersonal content — what the character saw, heard, or felt; what another character said or did.
+- "Food +3" is insufficient. "Elena spots a cache of dried rations tucked under a fallen log — enough for three days if rationed. [+3 food]" is sufficient.
+- Each named character must respond distinctively to events, not with a template that merely substitutes their name.
+
 ---
 
 ## Design Principles
@@ -176,6 +192,17 @@ Every player action must produce output that tells them:
 
 "You attack the goblin" is unacceptable. "You slash the goblin's leg (12 damage, crippling blow). It stumbles — movement halved, formation broken. The adjacent goblin turns to check on it, exposing its flank" tells the player what happened, why, and what opportunities it created.
 
+### Narrative Texture
+
+A game that outputs only mechanical readouts — "+3 food," "Trust: 20→31," "HP: 45→38" — denies the player the experience of being in the world. Mechanical feedback must be accompanied by sensory or interpersonal content.
+
+**Requirements:**
+- Every player action must produce output that includes both: (1) the mechanical result, and (2) at least one sentence describing what was seen, heard, felt, said, or done — the experiential dimension of the event.
+- Each named character (party member, NPC, opponent) must have 2-3 lines of individual physical and behavioral description that distinguishes them from other characters. Not just a name and a stat list — what do they look like, how do they talk, what do they do under stress?
+- Phase transitions and major events must include atmospheric description. Not just "Phase 2 begins" but what the world looks, sounds, or feels like in this new situation.
+- Use no fourth-wall language: "press N to continue," "select option 3," "click here to confirm." The player is in the world, not outside it.
+- Character responses to events must be individual, not templated. Different characters react differently to the same hardship. A template with a name substituted is not characterization.
+
 ### The Game Must Have Phases
 
 A game where turn 30 feels identical to turn 5 has failed at structure. Design explicit phases where the decision context changes — not because time passes, but because game state shifts in ways that alter what decisions matter.
@@ -183,6 +210,20 @@ A game where turn 30 feels identical to turn 5 has failed at structure. Design e
 Phase transitions must be triggered by concrete state changes: a resource crossing a threshold, an opponent changing tactics, a map region changing hands, a character reaching a capability milestone. "Things escalate over time" is not a phase — it's a slope, not a step.
 
 Each phase should introduce new decision types that weren't available or relevant before, and retire some old ones. Early game decisions (setup, positioning, initial investment) should not still be the primary activity in late game. If the player faces the same questions at turn 30 as turn 5, redesign.
+
+### Late-Game Escalation
+
+The highest-stakes decisions and the largest outcome swings must arrive in the final 30% of the game, not the first third. The failure mode is a game that front-loads difficulty (early game is hardest because the player has fewest resources) and has a flat or predetermined late game where the player is just executing an already-decided outcome.
+
+**After designing your content schedule**, identify the three decisions or events with the greatest influence on the final outcome. If all three are scheduled for the first half of the game, the arc is inverted. Restructure so that major escalation, new threats, and decisive moments arrive in the final phase.
+
+What late-game escalation looks like in practice:
+- New threat types or mechanics not present earlier
+- Resources that become scarcer or more contested late
+- Previously stable conditions that become unstable
+- Decisions that force tradeoffs between competing goals that were previously compatible (e.g., speed vs. safety vs. party member preservation)
+
+A game that is "effectively decided" before the last third has failed its arc. The final third should feel like the hardest and most consequential part.
 
 ### Information Must Be Earned
 
@@ -196,6 +237,10 @@ The player should not have perfect information. Design at least one category of 
 Hidden information must have a **discovery mechanism** — a way the player can learn it if they choose to invest in finding out. Permanently hidden information is arbitrary punishment. Hidden information with a discovery path creates tension, investment, and reward.
 
 Do not display all relevant data on the default screen. Information not immediately needed for the current decision should require the player to actively request it.
+
+**Genuine uncertainty requirement**: At least one important game variable must be *genuinely uncertain* for 5 or more turns — not just hidden-until-investigated, but actively unknowable through any single observation. The player must commit to decisions without knowing it precisely. Good candidates: opponent strategy mode duration, exact formula weights that govern outcomes, a route's hazard composition before scouting, how an NPC will react to a confrontation.
+
+Do not reveal this variable for free in the turn log or status display. Require the player to spend a resource to get an approximation — not the exact value, just a range or indicator. This creates the tension of committing under uncertainty, one of the most powerful engagement drivers.
 
 ### Failure Is Interesting
 
@@ -250,6 +295,13 @@ These are specific patterns that ruin games. Check your design against each one.
 - **Do not allow infinite accumulation.** Resources need sinks, caps, decay, or maintenance costs. If the player can hoard without penalty, there are no timing decisions.
 - **Every resource must create a spending dilemma.** If there's nothing meaningful to choose between, the resource is just a counter, not a game mechanic.
 
+**Every spendable resource must have at least one of the following:**
+- A hard cap at a strategically meaningful maximum (state the cap in a code comment and justify it: "max food = 20: party of 4 × 5 days of buffer")
+- A per-turn decay or maintenance cost
+- A diminishing-returns mechanism above a stated threshold
+
+**Hoarding test** (run this before submission): Simulate 20 turns of minimum player activity. Measure each resource's starting and ending value. If any resource exceeds what is strategically useful by more than 20%, add a cap or decay mechanism. Resources that accumulate indefinitely without penalty eliminate timing decisions and break the economy.
+
 ### Progression
 
 - **Upgrades must change what the player does, not just modify numbers.** "+5% damage" is not a meaningful upgrade. "Your attacks now pierce armor" or "You can now bribe guards" changes gameplay.
@@ -264,6 +316,7 @@ These are specific patterns that ruin games. Check your design against each one.
 - **Do not show all stats on every screen.** Show what's relevant to the current decision. Other stats should be accessible on request, not omnipresent.
 - **Do not make every interaction a numbered menu.** Use contextual commands, free-text input with synonyms, or at minimum, menus that change based on game state. The interface should feel like interacting with a world, not navigating a phone tree.
 - **Leave things for the player to discover.** Not every mechanic and interaction needs to be documented up front. Hidden interactions that the player can find through experimentation create moments of delight.
+- **Surface what the player is modifying.** If the player takes actions to change a value (trust, morale, sympathy, condition), they must be able to see the current accumulated state of that value — not just deltas. A player who has spent 5 turns building morale and cannot see the current morale level is being asked to manipulate a hidden variable. That is not information design, it is arbitrary opacity. Show current state. Reserve genuine mystery for values the player has not yet chosen to invest in.
 
 ### World
 
@@ -283,17 +336,21 @@ These are specific patterns that ruin games. Check your design against each one.
 
 **Every opponent must have at least two behavioral modes** with a concrete, observable trigger condition. Example: "Aggressive until HP below 40%, then defensive." Example: "Pursues resource grab until outmatched in military, then seeks alliance." Modes must be implemented in code and produce visibly different action choices. A single-mode AI executing the same decision function regardless of game state is a script, not an adversary.
 
+**Behavioral mode thresholds must include randomization.** If a mode switches at exactly 40% HP every run, the player learns this after one session and the strategic uncertainty collapses. Each mode transition threshold must vary by at least ±15% between runs or per opponent instance (e.g., `crisis_threshold = 0.40 + random.uniform(-0.08, 0.08)`). State in a code comment what randomizes and the range. The goal: a player who has seen an opponent once cannot precisely predict when it changes modes on the next run.
+
 ### Orphaned Mechanics
 
 An orphaned mechanic is code that exists but produces no observable player-facing consequence. It is the most common generator failure mode: the code *describes* a mechanic ("counter window opens," "angle advantage this exchange," "faction morale affected"), but no code path *uses* that description to change outcomes.
 
-**Orphaned mechanics are bugs.** They create false expectations (the player believes a mechanic exists that doesn't), waste implementation time, and fail audits.
+**Orphaned mechanics are bugs.** They create false expectations, waste implementation time, and fail audits.
 
-Before finalizing your game, audit every mechanic you've described in player-facing output:
+**The implementation-first rule** (critical): Before writing ANY player-facing text that implies a mechanical effect — a phase transition announcement, a menu entry, a tutorial hint, a status message — write the implementing code FIRST. The announcement text is the last thing you write for any feature. Never announce what a feature will do and implement it later. If the code isn't written yet, neither is the announcement.
+
+Before finalizing your game, perform this mandatory mapping:
 1. Read every log message, status line, and event description your game produces.
-2. For each one that implies a player-facing effect ("your flanking bonus applies," "the rival suspects you," "counter window opens"), trace the code path: where is this effect computed? Where does it change a game value?
-3. If you cannot find the code path, you have two choices: implement it or remove the message.
-4. Variables that are only *written* but never *read* in decision-making code are orphaned. A variable written in one place and only displayed (not used for calculation) is orphaned. Find them and either wire them up or delete them.
+2. For each one that implies a mechanical effect, write down: `"[announcement text]" → Implemented at: function_name():line_N`
+3. If you cannot fill in the implementation reference for any announcement, you have two choices: implement it now, or delete the announcement. No third option.
+4. Check every variable that accumulates state across turns (counters, history lists, pattern trackers). For each one, find the specific `if` statement or formula that READS this variable and changes game behavior based on it. If no such statement exists, delete the variable — it is false complexity that creates an illusion of depth without the substance.
 
 This audit takes 10 minutes and eliminates the most common failure that produces audit flags.
 
