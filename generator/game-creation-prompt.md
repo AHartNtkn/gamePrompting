@@ -22,6 +22,7 @@ You can spawn sub-agents to help with development. Use them — they let you par
 - **system-implementer** — Implements a specific game system given a design spec. Use this to build multiple systems in parallel. Give it clear interface contracts so the systems integrate.
 - **balance-checker** — Stress-tests your game's math by writing and running automated scenarios. Finds dominant strategies, broken formulas, runaway dynamics, and useless options. Use this after implementation.
 - **design-reviewer** — Reviews your game's design for structural problems (isolated systems, fake decisions, flat arcs, missing feedback loops). Use this after initial implementation to catch high-level issues before play-testing.
+- **simulation-verifier** — Audits your source code for orphaned mechanics: player actions that cost resources but produce no simulation outcome. **Run this after implementation. You may not deliver the game until it issues VERIFIED status.** It blocks delivery if any state variable is written by player action but never read in an outcome-determining function.
 
 To spawn an agent, use the Agent tool with the agent name as the subagent_type or name. Give it the game directory path and any specific instructions.
 
@@ -103,7 +104,9 @@ Play at least two sessions making different choices. Check:
 
 Fix every problem you find during play-testing. Then play again to verify the fixes. Do not deliver a game you haven't verified works.
 
-After play-testing, run the balance-checker with these explicit questions:
+After play-testing, run the **simulation-verifier** on your game directory. It will audit every state variable for orphaned mechanics. Fix or remove every finding before proceeding. Do not skip this step — it catches the most common generator failure (announcing mechanics that have no simulation backend).
+
+Then run the balance-checker with these explicit questions:
 1. **Dominant strategy test**: What is the single highest-value strategy? How much better is it than the second-best (in %)? If one strategy wins 80%+ of situations regardless of context, it must be redesigned.
 2. **Death spiral test**: Once a player starts losing, can they realistically recover? Test the worst-case scenario 10+ turns in. If recovery is mathematically impossible, design a recovery mechanism.
 3. **Early investment test**: Does performing better in the first 25% of the game lead to meaningfully better outcomes in the last 25%? If not, early decisions don't matter.
@@ -162,6 +165,21 @@ Then perform this **mandatory pre-delivery checklist** yourself before finishing
 - If all rewards reduce to the same single metric (money, points, a single bar), your reward structure is impoverished. Add at minimum two qualitatively distinct reward types: one that opens access to new content the player couldn't reach before (new options, new areas, new capabilities), and one that provides recognition at milestone moments.
 - Milestone rewards must be explicitly acknowledged in game output as named moments — not just as stat changes. "Net +$47. Day ends." is not a milestone. "Day 8: First net-positive day. The store turns a corner." is.
 - Check: does your game contain at least one moment where the player feels genuinely rewarded, not just less punished? If skillful play only delays punishment and never produces a positive experience, redesign your reward structure.
+
+**Feedback loop closure test** (required):
+- Name every feedback loop in your game (e.g., "reputation loop," "momentum loop," "faction trust loop").
+- For each loop, simulate 5 turns of active player investment — the player spends every available resource specifically to improve that metric. Measure the net change.
+- If net change is zero or negative under maximum active investment, the loop cannot close. Passive decay that matches or exceeds maximum active gain means the mechanic is cosmetic — it moves but goes nowhere. Fix: either reduce decay, increase the gain rate for active investment, or remove the loop entirely. Do not keep a loop that cannot be meaningfully improved.
+
+**Starting options balance test** (required if the game has parallel starting configurations):
+- List every starting option (layout A/B/C, build archetype, starting faction, initial configuration).
+- For each pair of options, identify at least one player goal or strategy where option A is meaningfully better than option B. If you cannot find any situation where option A beats option C, option A is strictly dominated — redesign it.
+- A spread of 50+ percentage points on a key mechanic between options with no compensating advantage for the lower option is not asymmetry, it is a ranked tier. Asymmetry means different strengths for different situations, not different amounts of the same strength.
+
+**End-state accuracy check** (required):
+- Identify the primary win/lose condition (the thing that most determines whether the player "succeeded" or "failed").
+- Verify that your game-over screen, final grade, and outcome text are gated on this condition first. A player who met the bankruptcy/death/elimination condition must receive a failure outcome — not a "thriving" rating because a secondary metric (style points, reputation, bonus score) was high.
+- Score formulas that weight secondary metrics above primary outcomes are bugs in the evaluation logic, not design decisions. Check your formula: if a player failed the primary condition, can they receive a passing grade from secondary metrics? If yes, fix the formula.
 
 ---
 
@@ -232,6 +250,8 @@ A game where turn 30 feels identical to turn 5 has failed at structure. Design e
 
 Phase transitions must be triggered by concrete state changes: a resource crossing a threshold, an opponent changing tactics, a map region changing hands, a character reaching a capability milestone. "Things escalate over time" is not a phase — it's a slope, not a step.
 
+**Time gates are banned as primary phase triggers.** `day >= N` is not a state change — it is a clock tick. A gate written as `day >= N OR performance_condition` is equivalent to a pure time gate if `performance_condition` takes longer than N turns to achieve: the day counter triggers first and the performance check is dead code. Phase gates must be pure performance conditions with an optional time floor. If you add a time floor (e.g., "not before day 5"), document explicitly why the performance condition alone is insufficient and verify the performance condition is achievable before day 5 in most playthroughs.
+
 Each phase should introduce new decision types that weren't available or relevant before, and retire some old ones. Early game decisions (setup, positioning, initial investment) should not still be the primary activity in late game. If the player faces the same questions at turn 30 as turn 5, redesign.
 
 ### Late-Game Escalation
@@ -264,6 +284,8 @@ Do not display all relevant data on the default screen. Information not immediat
 **Genuine uncertainty requirement**: At least one important game variable must be *genuinely uncertain* for 5 or more turns — not just hidden-until-investigated, but actively unknowable through any single observation. The player must commit to decisions without knowing it precisely. Good candidates: opponent strategy mode duration, exact formula weights that govern outcomes, a route's hazard composition before scouting, how an NPC will react to a confrontation.
 
 Do not reveal this variable for free in the turn log or status display. Require the player to spend a resource to get an approximation — not the exact value, just a range or indicator. This creates the tension of committing under uncertainty, one of the most powerful engagement drivers.
+
+**Discovery signal validity** (required verification): For every hidden parameter the player can discover through experimentation, verify that your game's structural constraints allow the experiment to actually produce useful data. If a mechanic requires varying an independent variable to observe the effect on an outcome, but a hard cap or guaranteed sell-through prevents that independent variable from ever varying in practice, the discovery system produces no usable signal — every experiment returns the same answer. Before finalizing any discovery mechanic, ask: "Can a player with reasonable resources actually set up the experimental conditions needed to learn this?" If the answer is no, either remove the constraining cap or replace the discovery mechanic with one that generates real information under normal play.
 
 **Management and simulation games are especially prone to the perfect-information failure.** These genres default to displaying every stat on every screen at all times — and this is not good design, it eliminates tension. A management game where exact inventory counts, exact demand rates, exact employee failure probabilities, and exact event likelihoods are all always visible is a spreadsheet. At least two parameters that affect long-run strategy must be hidden by default and discoverable only through active investigation or observation over time: demand elasticity for specific products (requires testing different price points), individual employee failure probability (observable only through enough experience), exact synergy formulas (discoverable through experimentation), or competitor behavior patterns (requires spending a turn to assess). The act of discovering these parameters is itself gameplay — it teaches mastery and rewards investment.
 
@@ -357,6 +379,8 @@ These are specific patterns that ruin games. Check your design against each one.
 - They must **react to player actions** — if the player exploits a weakness repeatedly, the opponent adapts. Static opponents who execute the same script regardless of what the player does are not adversaries.
 - Different opponents must have **meaningfully different behavioral profiles** — not just different stat values, but different priorities, preferred moves, and vulnerabilities. Fighting opponent A should require different strategy than fighting opponent B.
 - Opponent AI quality is a first-class design concern, not an afterthought. Budget significant design time for it.
+
+**Competitors must face the same elimination conditions as the player.** If the player can go bankrupt, be defeated, or lose by resource exhaustion, the competitor must face the same risk. Track the competitor's resource pool every turn. It must decrease from operational costs proportional to their position — competitors that maintain or grow without costs are not simulation participants, they are difficulty modifiers. A competitor that cannot fail is not a competitor. If you find yourself writing AI that only has upside, redesign it to have a real resource pool with real depletion.
 
 **Do not build AI that tracks player patterns without acting on them.** If you write code that records how often the player does X (e.g., `player_action_counts[action] += 1`, `consecutive_attacks`, `known_player_strategy`), you MUST write code that reads this data and changes AI behavior based on it. Otherwise, delete the tracking code entirely — it is false complexity that creates an illusion of adaptation without the substance.
 
