@@ -69,6 +69,24 @@ A sandbox life simulation game. The player can get one of several jobs, manage s
 
 ---
 
+## Prompt 11: Zoo Building & Management
+
+A zoo building and management simulation. Design enclosures, acquire animals, manage habitats, and attract visitors. Animals have species-specific needs — space, climate, terrain, social grouping, enrichment — that must be met or welfare declines. Visitor satisfaction depends on animal variety, visibility, amenities, and layout. Financial pressure from operating costs, animal acquisition, and facility expansion creates resource tension. Animals breed, age, get sick, and can escape if enclosures are inadequate.
+
+---
+
+## Prompt 12: Office Organization & Management
+
+An office organization and management game. Hire staff, assign roles, manage projects, and navigate office dynamics. Employees have individual skills, personalities, work styles, and interpersonal relationships that affect collaboration. Project success depends on team composition, resource allocation, and deadline management. Office layout, equipment, and policies affect productivity and morale. The player must balance short-term deliverables against long-term staff development and retention.
+
+---
+
+## Prompt 13: Squad Tactical Combat
+
+A tactical combat game where the player controls a squad fighting groups of enemy NPCs. Positioning, cover, flanking, elevation, and line of sight matter. Squad members have individual classes, equipment, and abilities. Enemies have distinct tactics — some suppress, some flank, some rush. Terrain is destructible or interactive. The player must coordinate squad actions under an action economy where doing everything isn't possible and prioritization is the core skill.
+
+---
+
 ## Coverage Analysis
 
 Which criteria categories each prompt is likely to exercise:
