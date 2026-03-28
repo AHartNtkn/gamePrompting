@@ -54,6 +54,43 @@ Classify each line:
 
 A variable with setters and display-only occurrences but NO legitimate readers is orphaned.
 
+### Step 2.5: Data Structure Field Audit
+
+Data definition tables (dicts, classes, or config objects that define abilities, weapons, units, buildings, or items) are the most common source of orphaned mechanics that code-grep misses. A field defined in a data table is not automatically a working mechanic — it must be read in an outcome function.
+
+**Find all data definition tables:**
+```bash
+grep -rn "DEFS\s*=\|_DATA\s*=\|_CONFIG\s*=\|_TYPES\s*=\|_TABLE\s*=\|_CATALOG\s*=" GAME_DIR/*.py
+grep -rn "'special':\|'abilities':\|'bonus':\|'effects':\|'modifiers':\|'properties':\|'traits':\|'flags':" GAME_DIR/*.py
+```
+
+For each table found, enumerate every field that could be a mechanical property. Skip pure display fields (`name`, `description`, `display_name`, `flavor`, `narrative`, `color`, `symbol`, `icon`).
+
+For each mechanical property field, grep for it across the codebase:
+```bash
+grep -rn "FIELD_NAME" GAME_DIR/*.py
+```
+
+Classify each hit:
+- **DATA DEFINITION**: appears in the dict/class definition — does **not** count as a reader
+- **DISPLAY ONLY**: appears in a `print`/string/format context with no conditional — does **not** count as a reader
+- **OUTCOME READER**: appears in a conditional (`if`, `elif`, `and`, `or`, `in`), arithmetic formula, or multiplier expression that changes damage, success probability, available options, or any other game outcome — **counts as a reader**
+
+A field with DATA DEFINITION and DISPLAY hits but no OUTCOME READER is a data-structure orphan. Report these with the `[DATA ORPHAN]` prefix and block delivery.
+
+Example data orphan:
+```
+[DATA ORPHAN]: weapon.special['armor_pierce']
+  Defined in: WEAPON_DEFS at weapons.py:42
+  Player sees: "armor-piercing capability" in weapon description
+  Search results:
+    weapons.py:42 — DATA DEFINITION: 'armor_pierce': True
+    display.py:88 — DISPLAY: f"Special: {weapon.special}"
+    [no outcome reader found in combat.py]
+  Required fix: Add conditional in damage_formula() that reads armor_pierce
+               OR remove 'armor_pierce' from WEAPON_DEFS and all display strings.
+```
+
 ### Step 3: Check accumulated counters and flags
 
 These are the highest-risk orphan patterns:
@@ -83,6 +120,18 @@ grep -rn "print\|f\"" GAME_DIR/*.py | grep -i "bonus\|penalty\|effect\|unlock\|i
 ```
 
 For each announcement, identify the variable it implies is being set, and verify that variable has a legitimate reader.
+
+### Step 6: Check phase variable readers
+
+Phase transitions that only update a label variable and print a message are dead mechanics.
+
+```bash
+grep -rn "phase\s*=\|\.phase\b\|_phase\b\|phase_\w*\s*=" GAME_DIR/*.py
+```
+
+For each phase variable found, verify it is read in at least one behavioral function — a conditional that gates player actions, modifies a formula, or changes AI behavior. Reading the phase variable ONLY in display/print code means the phase system has no mechanical effect and the transitions are labels-only.
+
+Report phase variables with no behavioral readers as `[PHASE ORPHAN]`.
 
 ## Reporting Format
 

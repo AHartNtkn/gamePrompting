@@ -111,6 +111,8 @@ Then run the balance-checker with these explicit questions:
 2. **Death spiral test**: Once a player starts losing, can they realistically recover? Test the worst-case scenario 10+ turns in. If recovery is mathematically impossible, design a recovery mechanism.
 3. **Early investment test**: Does performing better in the first 25% of the game lead to meaningfully better outcomes in the last 25%? If not, early decisions don't matter.
 4. **Useless option test**: Is there any option that is dominated by another option in all situations? Report it — either fix it or remove it.
+5. **Primary resource cost test**: For the most common action, compute `net_cost = action_cost - per_turn_recovery`. If net_cost >= 0, the resource system is non-functional for default play. Fix it.
+6. **Parallel option parity test**: For each parallel choice category (targets, builds, approaches), verify no option produces outcomes more than 2x better than any other. Report the ratio.
 
 Then perform this **mandatory pre-delivery checklist** yourself before finishing:
 
@@ -159,6 +161,17 @@ Then perform this **mandatory pre-delivery checklist** yourself before finishing
 - Simulate your losing trajectory. Identify the earliest turn at which a skilled player can no longer change the outcome — when even perfect play cannot recover.
 - If this point is more than 30% before game end, you have a death march: a stretch of turns where the player executes actions toward a predetermined end with no real agency remaining.
 - Fix: either (a) detect unwinnable states and end the game cleanly at that point, or (b) trigger a qualitatively different "last stand" phase when the player crosses the losing threshold — new desperate options, a changed game context, a genuine (if low-probability) recovery path. An unwinnable state that lasts 15 turns is not tension. It is wasted time.
+
+**Phase mechanical effect audit** (required if game has phases or alert levels):
+- Grep your codebase for every use of each phase/alert state variable.
+- Verify at least one result is a behavioral read: a conditional that gates player or AI actions, modifies a damage/success formula, or makes new options available — NOT just a display string or narrative message.
+- If the phase variable is only read in print/display code, your phases produce labels without mechanical consequences. Every phase transition must change at least one concrete game behavior. Write the function name and line where each phase is read as a behavioral reader; if you cannot, the phase is cosmetic and will fail the audit.
+
+**Rule symmetry audit** (required if game has AI opponents or rivals):
+- List every validation check applied to player actions (e.g., "cannot use ability X in state Y," "cannot retreat from position Z").
+- For each check, verify the equivalent logic appears in the AI action handler for the same action type. AI entities must face the same physical and state constraints as the player.
+- Test one player constraint by inspecting the AI action handler: confirm the AI cannot bypass a constraint the player cannot bypass.
+- Asymmetries that are unintentional bugs (player cannot retreat from clinch but AI can) create fairness violations that audit category C and Q will penalize heavily.
 
 **Reward diversity check** (required):
 - List every type of reward your game provides. For each, write what player value it delivers.

@@ -47,6 +47,31 @@ Compare two simulation tracks: one that invests heavily in early-game optimizati
 ### 4. Useless Option Test
 For every option/move/upgrade/strategy in the game, check if it is ever the best choice in any simulated situation. Report any option that is never optimal — it should either be fixed or removed.
 
+
+### 5. Primary Action Net Resource Cost Test
+
+For each resource that governs action availability (stamina, AP, energy, mana, suspicion budget, etc.):
+
+1. Identify the most commonly used player action — the one a typical player executes most turns
+2. Compute explicitly: `net_cost = action_resource_cost - per_turn_passive_recovery`
+3. If `net_cost >= 0`, the resource does not constrain default play — the player can use the primary action indefinitely without depletion
+4. Report the arithmetic explicitly: "Primary action '[name]' costs [X] per use; recovery is [Y] per turn; net_cost = X - Y = [value]"
+5. If net_cost >= 0 for the most common action: this is a **critical flaw** — the game's primary resource constraint is bypassed by default play. Report it prominently.
+
+**Pass criteria**: The most common action must have net_cost < 0 (net resource drain under normal use).
+
+### 6. Parallel Option Parity Test
+
+For each category of parallel choices the player makes (attack target types, starting loadout, strategic approach, weapon choice, build path, approach style):
+
+1. Simulate each option used exclusively for a full encounter or session (5+ simulations per option, same random seed where possible)
+2. Measure: average turns/rounds to win condition, win rate
+3. Compute the parity ratio: `best_performance / worst_performance` across all options in the category
+4. If parity ratio > 2.0 for any metric: report the dominant option, the weakest option, and the exact ratio
+5. Example: "Targeting 'throat': avg 3.1 turns to win; targeting 'chest': avg 8.4 turns; ratio = 2.7x — DOMINANT STRATEGY FOUND"
+
+**Pass criteria**: No option in any parallel choice category should produce outcomes more than 2x better than any other option in the same category on any key performance metric.
+
 ## What to Report
 
 1. **Broken formulas** — any formula that produces nonsensical values at extremes (0 damage, negative health, overflow)
