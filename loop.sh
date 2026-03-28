@@ -364,7 +364,7 @@ Do NOT generate or audit a game. Only modify the generator files and commit."
     MODIFY_LOG="$LOG_DIR/modify-iter${ITERATION}.log"
     run_claude "$MODIFY_LOG" "$MODIFY_PROMPT" \
         --model "$MODEL" \
-        --tools "Bash,Read,Write,Edit,Glob,Grep" \
+        --tools "Bash,Read,Write,Edit,Glob,Grep,Skill,Agent" \
         --permission-mode bypassPermissions \
         --add-dir "$GENERATOR_DIR" \
         || true
