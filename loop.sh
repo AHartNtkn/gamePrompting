@@ -484,6 +484,11 @@ else . end
 
     log "  Audit complete: $AUDIT_DIR"
 
+    # Copy generation summary into audit directory for archival
+    if [[ -f "$SCRIPT_DIR/generation-summary.md" ]]; then
+        cp "$SCRIPT_DIR/generation-summary.md" "$AUDIT_DIR/generation-summary.md"
+    fi
+
     SCORE=$(grep -oP 'SCORE:\s*\K[\d.]+' "$AUDIT_DIR/summary.txt" | tail -1) || SCORE="0"
     SENTINEL_PASS=$(grep -oP 'SENTINEL PASS:\s*\K\d+' "$AUDIT_DIR/summary.txt" | tail -1) || SENTINEL_PASS="0"
     SENTINEL_FAIL=$(grep -oP 'SENTINEL FAIL:\s*\K\d+' "$AUDIT_DIR/summary.txt" | tail -1) || SENTINEL_FAIL="0"
