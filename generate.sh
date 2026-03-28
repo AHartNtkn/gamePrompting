@@ -46,16 +46,12 @@ done
 if [[ -z "$CONCEPT" ]]; then
     echo "Usage: ./generate.sh <concept> [--model MODEL] [--output-dir DIR]"
     echo ""
-    echo "  concept      A test prompt number (1-5), a concept string, or a file path"
+    echo "  concept      A test prompt number, a concept string, or a file path"
     echo "  --model      Claude model to use (default: sonnet)"
     echo "  --output-dir Output directory for game files (default: games/<name>/)"
     echo ""
-    echo "Test prompts:"
-    echo "  1  Store Simulation"
-    echo "  2  Melee Combat Simulation"
-    echo "  3  Space Station Infiltration"
-    echo "  4  Political Simulation"
-    echo "  5  Wilderness Survival Expedition"
+    echo "Test prompts (from test-prompts.md):"
+    grep '^## Prompt [0-9]*:' "$TEST_PROMPTS" | sed 's/^## Prompt \([0-9]*\): \(.*\)/  \1  \2/'
     exit 1
 fi
 
@@ -68,7 +64,7 @@ fi
 CONCEPT_TEXT=""
 CONCEPT_NAME=""
 
-if [[ "$CONCEPT" =~ ^[1-5]$ ]]; then
+if [[ "$CONCEPT" =~ ^[0-9]+$ ]]; then
     PROMPT_NUM="$CONCEPT"
     CONCEPT_TEXT="$(awk -v n="$PROMPT_NUM" '
         /^## Prompt '"$PROMPT_NUM"':/ { found=1; next }

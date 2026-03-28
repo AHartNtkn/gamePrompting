@@ -207,16 +207,37 @@ fi
 
 # --- Main Loop ---
 
+# Count concepts dynamically from test-prompts.md
+NUM_CONCEPTS=$(grep -c '^## Prompt [0-9]*:' "$SCRIPT_DIR/test-prompts.md")
+log "Found $NUM_CONCEPTS concepts in test-prompts.md"
+
+# Generate a shuffled order for each full cycle through concepts
+shuffle_concepts() {
+    shuf -i 1-"$NUM_CONCEPTS" -n "$NUM_CONCEPTS"
+}
+
+CONCEPT_ORDER=()
+
 log "========================================"
 log "  Autoresearch Loop"
 log "  Model: $MODEL"
+log "  Concepts: $NUM_CONCEPTS"
 log "  Iterations: $([ "$MAX_ITERATIONS" -eq 0 ] && echo "unlimited" || echo "$MAX_ITERATIONS")"
 log "========================================"
 log ""
 
 while true; do
     ITERATION=$(($(completed_iterations) + 1))
-    CONCEPT=$(( ((ITERATION - 1) % 5) + 1 ))
+
+    # Reshuffle when we've exhausted the current order
+    if [[ ${#CONCEPT_ORDER[@]} -eq 0 ]]; then
+        mapfile -t CONCEPT_ORDER < <(shuffle_concepts)
+        log "  Shuffled concept order: ${CONCEPT_ORDER[*]}"
+    fi
+
+    # Pop the next concept
+    CONCEPT="${CONCEPT_ORDER[0]}"
+    CONCEPT_ORDER=("${CONCEPT_ORDER[@]:1}")
 
     # Get the concept description for context
     CONCEPT_DESC=$(awk -v n="$CONCEPT" '
