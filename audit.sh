@@ -202,7 +202,7 @@ declare -a JOB_IDS=()
 declare -a JOB_PROMPTS=()
 declare -a JOB_OUTPUTS=()
 
-for letter in A B C D E F G H I J K L M N O P Q R S T U; do
+for letter in A B C D E F G H I J K L M N O P Q R S T U V; do
     prompt_file="$PROMPTS_DIR/${letter}.md"
     if [[ -f "$prompt_file" ]]; then
         JOB_IDS+=("$letter")
@@ -290,7 +290,7 @@ TOTAL_EARNED=0
 TOTAL_POSSIBLE=0
 
 echo "Category Results:"
-for letter in A B C D E F G H I J K L M N O P Q R S T U; do
+for letter in A B C D E F G H I J K L M N O P Q R S T U V; do
     output_file="$OUTPUT_DIR/${letter}.txt"
     if [[ -f "$output_file" ]] && [[ -s "$output_file" ]]; then
         earned="$(grep -oP 'EARNED:\s*\K[0-9]+' "$output_file" | tail -1)" || earned=0

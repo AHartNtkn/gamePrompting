@@ -387,6 +387,16 @@ Pattern: The game has mechanics whose effects cannot be understood through in-ga
 Why: LLMs implementing roguelike-style games often import complex mechanics from existing games without providing the in-game information systems that make those mechanics discoverable.
 Detection: Identify the 3 most complex mechanics. For each, determine whether a player could understand it through in-game information alone. If any is opaque without external knowledge, FAIL.
 
+**S65. Decorative ASCII Title Card**
+Pattern: The game has a large ASCII art title screen or banner (10+ lines) that contains no gameplay information — purely decorative art that the player must scroll past.
+Why: LLMs default to generating elaborate ASCII title cards because they've seen them in training data. These push actual game content off-screen and add nothing to the experience.
+Detection: Check if the game's opening output contains a large ASCII art block before the first interactive element. If the art communicates no gameplay information and occupies >10 lines, FAIL.
+
+**S66. Missing Spatial Display**
+Pattern: The game involves spatial reasoning (navigation, positioning, layout, line of sight) but provides no visual map, grid, or diagram — all spatial information is conveyed through text descriptions only.
+Why: LLMs default to text-menu interfaces even when the concept clearly implies spatial interaction. A space station infiltration game, a store layout game, or a tactical combat game without a map forces the player to build a mental model from prose.
+Detection: Identify whether the game concept involves spatial decisions. Check if any visual spatial representation exists. If the concept demands spatial reasoning and the game provides no visual display, FAIL.
+
 ---
 
 ## Summary
@@ -402,8 +412,8 @@ Detection: Identify the 3 most complex mechanics. For each, determine whether a 
 | VII. World Autopilot | 8 | Autocomplete settings/narrative |
 | VIII. Structural Autopilot | 5 | Template structures |
 | IX. Untested Gameplay | 8 | Works in code, broken in play |
-| X. Miscellaneous | 11 | Other red flags |
-| **Total** | **63** | |
+| X. Miscellaneous | 13 | Other red flags |
+| **Total** | **65** | |
 
 ### Usage Note
 

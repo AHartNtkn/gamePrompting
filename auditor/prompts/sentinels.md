@@ -222,6 +222,12 @@ Check: Compare output length for 5 routine actions vs. 5 significant events. If 
 **S64. Wiki-Required Mechanics**
 Check: Identify the 3 most complex mechanics in the game. For each, determine whether a player could understand it through in-game information and experimentation alone. If any mechanic is opaque without external documentation, FAIL.
 
+**S65. Decorative ASCII Title Card**
+Check: Does the game's opening output contain a large ASCII art block (10+ lines) before the first interactive element that communicates no gameplay information? If yes, FAIL.
+
+**S66. Missing Spatial Display**
+Check: Does the game concept involve spatial reasoning (navigation, positioning, layout, line of sight, tactical movement)? If yes, does the game provide any visual spatial representation (map, grid, diagram)? If the concept demands spatial reasoning and the game provides no visual display, FAIL.
+
 ## Output Format
 
 Output your results in exactly this format:

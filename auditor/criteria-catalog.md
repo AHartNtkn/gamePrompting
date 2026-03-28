@@ -781,7 +781,7 @@ Does the game provide enough concrete, specific detail for the player to build a
 *(Original auditor, CLI research)*
 
 **N7. ASCII Art Effectiveness** `[CONDITIONAL: game uses ASCII art]`
-If ASCII art is used, does it communicate spatial information clearly? Is it readable and functional, not just decorative?
+If ASCII art is used, does it communicate spatial information clearly? Is it readable and functional, not just decorative? See Category V for comprehensive visual representation criteria.
 *(CLI research)*
 
 **N8. Aesthetic Coherence**
@@ -1092,29 +1092,84 @@ Does the game demonstrate awareness of its genre's conventions? Does it follow t
 
 ---
 
+## V. Visual Representation & ASCII Graphics
+
+How effectively does the game use visual elements (ASCII art, diagrams, maps, gauges, charts) to enhance comprehension and experience?
+
+**V1. Spatial Representation Appropriateness**
+When the game involves spatial relationships that affect decisions (movement, positioning, layout, adjacency), does it provide a visual spatial display (map, grid, diagram) rather than describing spatial information only in text? A game about navigating a space station, arranging a store layout, or positioning a squad that provides no visual map has missed its most natural representation.
+*(Roguelike universal convention, Cogmind, Brogue, Dwarf Fortress)*
+
+**V2. Quantity Visualization** `[CONDITIONAL: game has quantities the player monitors]`
+Does the game use visual gauges (bars, meters, proportional fills) for quantities the player must monitor or compare quickly? `[████████░░] 80%` communicates urgency faster than `HP: 80/100`. Resources, health, morale, progress — any value that changes and matters should have a visual representation, not just a number.
+*(Terminal visualization research, roguelike HP bars, Cogmind status displays)*
+
+**V3. Entity Visual Identity** `[CONDITIONAL: game has entities whose individual identity matters]`
+When individual entities matter (named characters, specific opponents, unique items), does the game provide visual differentiation beyond text labels? Procedural portraits, distinct item art, faction heraldry — any visual element that makes one entity recognizable and distinct from others of the same type.
+*(Warsim 202Q+ procedural faces, Cogmind item art, Paradox character portraits)*
+
+**V4. Structural Diagramming** `[CONDITIONAL: game has structures with meaningful layout]`
+When the game involves structures with meaningful spatial arrangement (vehicle components, building layouts, body parts, network topology, mechanical assemblies), does it provide diagrams showing the structure visually? A car engine where part arrangement matters, a network with connected nodes, a character's body with damaged regions — these benefit from visual representation.
+*(Dwarf Fortress z-level cross-sections, CDDA vehicle displays, body part damage diagrams)*
+
+**V5. Visual Representation Absence**
+Are there game elements that would clearly benefit from visual representation but receive none? This is the inverse of the other criteria — detecting missed opportunities. A fishing game with no depiction of the water/depth, a combat game with no position diagram, a management game with no visual dashboard of trends. When a visual would obviously help the player and the game provides only text, that is a gap.
+*(Cross-reference with concept requirements — spatial, structural, or comparative information presented only as text)*
+
+**V6. Symbol Consistency**
+Does every visual symbol, character, or glyph have a consistent meaning throughout the game? If `#` means wall in one display and dense forest in another with no clear context distinction, the visual vocabulary is broken. Consistent symbol-meaning mapping is what makes ASCII displays learnable rather than cryptic.
+*(Roguelike conventions, Mark R. Johnson academic research on ASCII semiotics, CDDA symbol system)*
+
+**V7. Visual Readability**
+Can the player extract key information from visual displays quickly? Is there clear figure/ground separation — important elements visually distinct from background? Does the display use negative space to make occupied areas prominent? A dense wall of characters where nothing stands out defeats the purpose of visual representation.
+*(Cogmind deliberate negative space, Brogue color contrast, visual density research)*
+
+**V8. Color Semantics** `[CONDITIONAL: game uses color]`
+Does color encode consistent gameplay-relevant categories (material type, urgency level, faction identity, damage state) rather than being applied arbitrarily? Systematic color coding is information; random color is noise. Red for danger/damage, green for health/safety, yellow for caution — these conventions exist because they work. Games that use color without semantic consistency waste a powerful information channel.
+*(Cogmind weapon color categories, Brogue terrain/lighting colors, Dwarf Fortress material colors)*
+
+**V9. Decorative vs. Functional Art**
+Does all ASCII art in the game communicate something the player can use (identity, spatial relationship, status, structure, atmosphere), or is some purely decorative filler that consumes screen space without informing decisions? Large title cards, ornamental borders, and illustrative drawings that push game information off-screen are clutter. Art must earn its screen space.
+*(Cogmind "lots of black when nothing is happening," anti-pattern research)*
+
+**V10. Dynamic Visual Updates** `[CONDITIONAL: game has visual representations of changing state]`
+When ASCII art represents something that changes (a map with moving entities, a health bar, a building under construction, a damaged vehicle), does the display update to reflect the current state? Static illustrations for dynamic information become lies when the underlying data changes and the art doesn't.
+*(Brogue animated water/fire/lighting, Cogmind particle effects, CDDA seasonal terrain)*
+
+**V11. Art-Information Integration**
+Does ASCII art appear alongside functional information rather than displacing it? A portrait of an NPC should accompany their stats and dialogue options, not replace them. Diagrams should label their components. Maps should include a legend if symbols are non-obvious. Visual and textual information should complement each other.
+*(IF/MUD tradition, Cogmind item art alongside stats)*
+
+**V12. Medium-Appropriate Abstraction**
+Does the ASCII art use abstraction appropriate to text rendering rather than attempting photorealism? Text characters cannot render curves, gradients, or fine detail. Semi-abstract line art that suggests form and lets the player's imagination complete the picture is more effective than 40-line attempts at realistic drawings that resolve into noise. Simpler is usually better.
+*(Cogmind "semi-abstract line art," Stone Story RPG symbol language, Warsim modular face components)*
+
+---
+
 ## Summary
 
 | Category | Count |
 |----------|-------|
 | A. Rules & Formal Structure | 10 |
-| B. Systems & Emergence | 10 |
-| C. World & Simulation | 13 |
-| D. Decision Architecture | 17 |
+| B. Systems & Emergence | 14 |
+| C. World & Simulation | 14 |
+| D. Decision Architecture | 19 |
 | E. Information Design | 17 |
-| F. Uncertainty & Randomness | 11 |
-| G. Economy & Resource Design | 8 |
-| H. Challenge & Difficulty | 12 |
-| I. Learning & Mastery | 13 |
-| J. Pacing & Rhythm | 10 |
+| F. Uncertainty & Randomness | 12 |
+| G. Economy & Resource Design | 9 |
+| H. Challenge & Difficulty | 14 |
+| I. Learning & Mastery | 15 |
+| J. Pacing & Rhythm | 11 |
 | K. Engagement & Compulsion | 13 |
 | L. Player Agency & Freedom | 10 |
 | M. Motivation & Reward | 9 |
 | N. Aesthetic & Thematic Coherence | 10 |
 | O. Balance & Stability | 12 |
-| P. Interface & Usability | 12 |
+| P. Interface & Usability | 14 |
 | Q. AI & Opposition | 5 |
-| R. Variety & Replayability | 6 |
+| R. Variety & Replayability | 8 |
 | S. Completeness & Polish | 7 |
 | T. Goal Structure | 5 |
 | U. Specific Design Lenses | 12 |
-| **Total** | **212** |
+| V. Visual Representation & ASCII Graphics | 12 |
+| **Total** | **252** |
