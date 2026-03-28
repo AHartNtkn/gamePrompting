@@ -109,6 +109,26 @@ After play-testing, run the balance-checker with these explicit questions:
 3. **Early investment test**: Does performing better in the first 25% of the game lead to meaningfully better outcomes in the last 25%? If not, early decisions don't matter.
 4. **Useless option test**: Is there any option that is dominated by another option in all situations? Report it — either fix it or remove it.
 
+Then perform this **mandatory pre-delivery checklist** yourself before finishing:
+
+### Pre-Delivery Checklist
+
+**Orphaned mechanics audit** (required):
+- Read every message your game outputs that implies a mechanical effect.
+- For each implied effect, confirm the code path that delivers it. Write the function name next to each one in your notes.
+- Any message without a code path gets either a code path or gets removed. No exceptions.
+- Check every variable that accumulates data across turns (counters, history lists, pattern trackers). Verify each is *read* inside a decision-making function, not just displayed. If it's only written to and displayed but never informs a decision, delete it.
+
+**Difficulty validation** (required):
+- Estimate the challenge of each major encounter or phase using the simplest strategy available.
+- The challenge must strictly increase. If encounter 3 is harder than encounter 5, rebalance.
+- State your difficulty estimates explicitly in a comment block. Gut feel is not enough — trace the math.
+
+**Degenerate strategy test** (required):
+- Identify the three simplest possible strategies (e.g., "always pick highest-damage option," "always ally with the strongest faction," "always retreat/delay").
+- Verify each one fails at some point in the game. If a trivial strategy wins 80%+ of encounters, add a specific counter-mechanic.
+- The game must not be solvable by a player who has learned only one move, one pattern, or one response.
+
 ---
 
 ## Design Principles
@@ -183,6 +203,26 @@ When the player fails — loses a battle, goes bankrupt, gets caught — the res
 
 **Every major failure mode must have at least one non-obvious recovery path.** A reputation death spiral that is unrecoverable after 10% of a run destroys the player experience for 90% of turns. A combat situation that becomes unwinnable by turn 3 of a 30-turn fight makes the remaining turns meaningless. For every significant negative feedback loop, design a counter-pressure: a slower recovery option, a new action available only when desperate, a mechanic that activates when you're losing. Failure should open new gameplay options, not just extend a death march.
 
+### Mastery Must Be Measurable
+
+A game that cannot measure player performance cannot teach mastery. Players improve what they can observe — if there is no feedback on quality of play, there is no skill development, only luck attribution.
+
+**Track performance explicitly.** At minimum: how many turns/actions the player used, what resources were spent or lost, and how the outcome was achieved (the method, not just win/loss). Display this at the end of each major encounter as a grade, rating, or score. Include at least one dimension where skilled play produces a measurably better outcome than average play.
+
+**Make the first challenge teachable.** The opening encounter must be hard enough to require a real decision, but forgiving enough that a player who understands the core mechanic will win. A first encounter with a 95%+ win rate against any strategy teaches nothing.
+
+**Track the player's improvement signal.** If a player does something skilled (executes a setup, exploits a weakness, manages a resource under pressure), acknowledge it with specific feedback: not "you won" but "you won in 8 turns — the par is 14." This tells skilled players their skill mattered.
+
+### The World Acts Without You
+
+A simulation that freezes when the player looks away is not a simulation — it is a stage set. Other actors in the world must pursue their own goals using the same systems the player uses, whether or not the player interacts with them.
+
+**NPC decision cycles run every turn.** Factions accumulate resources, form alliances, make moves, and react to each other according to their own goals and the current game state. The player is one actor in this world, not the protagonist of a theme park.
+
+**NPC goals are specific and traceable.** Every significant NPC or faction has a named objective (control N seats, eliminate rival X, pass policy Y) that shapes their decisions. Players should be able to observe NPC behavior and infer their goals — and then either exploit or counter those goals.
+
+**The world diverges without player input.** If the player takes no action for 3 turns, the game state should change noticeably as a result of other actors' decisions. If it doesn't, the world is a backdrop, not a simulation.
+
 ---
 
 ## Common Failure Modes to Avoid
@@ -238,6 +278,24 @@ These are specific patterns that ruin games. Check your design against each one.
 - They must **react to player actions** — if the player exploits a weakness repeatedly, the opponent adapts. Static opponents who execute the same script regardless of what the player does are not adversaries.
 - Different opponents must have **meaningfully different behavioral profiles** — not just different stat values, but different priorities, preferred moves, and vulnerabilities. Fighting opponent A should require different strategy than fighting opponent B.
 - Opponent AI quality is a first-class design concern, not an afterthought. Budget significant design time for it.
+
+**Do not build AI that tracks player patterns without acting on them.** If you write code that records how often the player does X (e.g., `player_action_counts[action] += 1`, `consecutive_attacks`, `known_player_strategy`), you MUST write code that reads this data and changes AI behavior based on it. Otherwise, delete the tracking code entirely — it is false complexity that creates an illusion of adaptation without the substance.
+
+**Every opponent must have at least two behavioral modes** with a concrete, observable trigger condition. Example: "Aggressive until HP below 40%, then defensive." Example: "Pursues resource grab until outmatched in military, then seeks alliance." Modes must be implemented in code and produce visibly different action choices. A single-mode AI executing the same decision function regardless of game state is a script, not an adversary.
+
+### Orphaned Mechanics
+
+An orphaned mechanic is code that exists but produces no observable player-facing consequence. It is the most common generator failure mode: the code *describes* a mechanic ("counter window opens," "angle advantage this exchange," "faction morale affected"), but no code path *uses* that description to change outcomes.
+
+**Orphaned mechanics are bugs.** They create false expectations (the player believes a mechanic exists that doesn't), waste implementation time, and fail audits.
+
+Before finalizing your game, audit every mechanic you've described in player-facing output:
+1. Read every log message, status line, and event description your game produces.
+2. For each one that implies a player-facing effect ("your flanking bonus applies," "the rival suspects you," "counter window opens"), trace the code path: where is this effect computed? Where does it change a game value?
+3. If you cannot find the code path, you have two choices: implement it or remove the message.
+4. Variables that are only *written* but never *read* in decision-making code are orphaned. A variable written in one place and only displayed (not used for calculation) is orphaned. Find them and either wire them up or delete them.
+
+This audit takes 10 minutes and eliminates the most common failure that produces audit flags.
 
 ### Structure
 
