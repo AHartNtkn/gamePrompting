@@ -134,7 +134,7 @@ if [[ $(completed_iterations) -eq 0 && "$SKIP_TO" != "loop" ]]; then
             log "  Skipping audit (--skip-to evaluate)"
         else
             log "  Auditing baseline game..."
-            timeout 7200 ./audit.sh "$GAME_DIR" --model "$MODEL" 2>&1 | tee audit.log || true
+            timeout 86400 ./audit.sh "$GAME_DIR" --model "$MODEL" 2>&1 | tee audit.log || true
         fi
 
         AUDIT_DIR=$(ls -dt "$SCRIPT_DIR/audits"/*/ 2>/dev/null | head -1)
@@ -384,7 +384,7 @@ Do NOT generate or audit a game. Only modify the generator files and commit."
         log "[Step 3] SKIPPED (--skip-to evaluate)"
     else
         log "[Step 3] Auditing game..."
-        timeout 7200 ./audit.sh "$GAME_DIR" --model "$MODEL" 2>&1 | tee audit.log || true
+        timeout 86400 ./audit.sh "$GAME_DIR" --model "$MODEL" 2>&1 | tee audit.log || true
     fi
 
     AUDIT_DIR=$(ls -dt "$SCRIPT_DIR/audits"/*/ 2>/dev/null | head -1)
