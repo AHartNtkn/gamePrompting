@@ -172,28 +172,28 @@ ${GAME_INFO}"
     prompt_file_tmp=$(mktemp)
     echo "$full_prompt" > "$prompt_file_tmp"
 
-    local attempt
-    for attempt in 1 2 3; do
-        claude -p - \
-            --model "$MODEL" \
-            --output-format text \
-            --tools "Bash,Read" \
-            --permission-mode bypassPermissions \
-            --add-dir "$GAME_DIR" \
-            < "$prompt_file_tmp" \
-            > "$output_file" 2>/dev/null || {
-            rm -f "$prompt_file_tmp"
-            mv "$output_file" "${output_file%.txt}_error.txt" 2>/dev/null
-            return
-        }
-        # Retry if output is empty (transient API failure)
-        if [[ -s "$output_file" ]]; then
-            rm -f "$prompt_file_tmp"
-            return
-        fi
-        echo "  [${id}] Empty response (attempt $attempt/3), retrying..." >&2
-        sleep 5
-    done
+    # Auditor writes its output file directly via the Write tool.
+    # This avoids stdout capture failures (empty output, appended commentary).
+    local full_prompt_with_output="${full_prompt}
+
+Write your final scored output to: ${output_file}
+Use the Write tool to create this file. Do not rely on stdout."
+
+    echo "$full_prompt_with_output" > "$prompt_file_tmp"
+
+    claude -p - \
+        --model "$MODEL" \
+        --output-format text \
+        --tools "Bash,Read,Write" \
+        --permission-mode bypassPermissions \
+        --add-dir "$GAME_DIR" \
+        < "$prompt_file_tmp" \
+        > /dev/null 2>/dev/null || true
+
+    if [[ ! -s "$output_file" ]]; then
+        mv "$output_file" "${output_file%.txt}_error.txt" 2>/dev/null
+    fi
+
     rm -f "$prompt_file_tmp"
 }
 

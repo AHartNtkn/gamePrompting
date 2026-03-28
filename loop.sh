@@ -2,10 +2,10 @@
 set -euo pipefail
 
 # Autoresearch loop for game creation prompt optimization.
-# Each iteration: analyze → modify → generate → audit → evaluate → keep/discard
+# Each iteration: modify → generate → audit → evaluate
 # Each step uses a fresh claude context. The journal is persistent state.
 #
-# Usage: ./loop.sh [--model MODEL] [--iterations N]
+# Usage: ./loop.sh [--model MODEL] [--iterations N] [--skip-to STEP]
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 JOURNAL="$SCRIPT_DIR/journal.md"
@@ -16,7 +16,7 @@ LOG_DIR="$SCRIPT_DIR/logs"
 
 MODEL="sonnet"
 MAX_ITERATIONS=0  # 0 = infinite
-SKIP_TO=""        # resume point: "audit", "evaluate", "loop"
+SKIP_TO=""        # resume point: "audit", "evaluate"
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -28,9 +28,6 @@ while [[ $# -gt 0 ]]; do
 done
 
 # --- Logging ---
-# log() prints to terminal and appends to log file.
-# run_live() runs a command, logs full output, shows only the latest
-# non-empty line on the terminal (overwriting in place).
 
 mkdir -p "$LOG_DIR"
 LOG_FILE="$LOG_DIR/loop-$(date -u +%Y%m%d-%H%M%S).log"
@@ -42,15 +39,13 @@ log() {
     echo "[$timestamp] $*" >> "$LOG_FILE"
 }
 
-# Run a claude -p call with stream-json, showing filtered output in place via /dev/tty.
-# Full stream-json is saved to logfile. Terminal shows a single updating status line.
+# Run a claude -p call with stream-json output.
 # Args: logfile prompt [extra claude args...]
 run_claude() {
     local logfile="$1"
     local prompt="$2"
     shift 2
 
-    # Write prompt to temp file to avoid "Argument list too long"
     local prompt_tmp
     prompt_tmp=$(mktemp)
     echo "$prompt" > "$prompt_tmp"
@@ -66,8 +61,6 @@ run_claude() {
 # --- Initialization ---
 
 # Kill orphaned tmux sessions from previous runs.
-# Game processes in tmux survive loop termination and can recreate
-# deleted directories or hold file descriptors open.
 for sess in $(tmux list-sessions -F '#{session_name}' 2>/dev/null); do
     if [[ "$sess" == game* || "$sess" == audit-* ]]; then
         tmux kill-session -t "$sess" 2>/dev/null
@@ -99,30 +92,19 @@ JOURNAL_EOF
 fi
 
 if [[ ! -f "$RESULTS" ]]; then
-    printf 'commit\tconcept\tscore\tsentinel_pass\tsentinel_fail\tstatus\tdescription\n' > "$RESULTS"
+    printf 'commit\tconcept\tscore\tsentinel_pass\tsentinel_fail\tdescription\n' > "$RESULTS"
     log "Created results.tsv"
 fi
 
-# --- Helper: get best score for a concept ---
-
-best_score_for_concept() {
-    local concept="$1"
-    awk -F'\t' -v c="$concept" '
-        NR > 1 && $2 == c && $6 == "keep" { if ($3 > best) best = $3 }
-        END { print (best ? best : "0") }
-    ' "$RESULTS"
-}
-
-# --- Helper: count completed iterations ---
+# --- Helper ---
 
 completed_iterations() {
     tail -n +2 "$RESULTS" | wc -l | tr -d ' '
 }
 
 # --- Baseline Run ---
-# On first launch (no results yet), run a baseline: generate + audit
-# the current prompt without modifications, so the journal and scores
-# have real data before the first modification attempt.
+# On first launch (no results yet), generate + audit the current prompt
+# without modifications, so the journal has real data before the first change.
 
 if [[ $(completed_iterations) -eq 0 && "$SKIP_TO" != "loop" ]]; then
     log "========================================"
@@ -138,15 +120,13 @@ if [[ $(completed_iterations) -eq 0 && "$SKIP_TO" != "loop" ]]; then
         timeout 3600 ./generate.sh "$CONCEPT" --model "$MODEL" 2>&1 | tee run.log || true
     fi
 
-    # Check for game by looking for run.sh, not exit codes
     GAME_DIR=$(ls -dt "$SCRIPT_DIR/games"/*/ 2>/dev/null | head -1)
     if [[ -z "$GAME_DIR" || ! -f "$GAME_DIR/run.sh" ]]; then
         log "  ERROR: No game produced for baseline."
-        printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
-            "$(git rev-parse --short HEAD)" "$CONCEPT" "0" "0" "0" "error" "baseline: no game produced" \
+        printf '%s\t%s\t%s\t%s\t%s\t%s\n' \
+            "$(git rev-parse --short HEAD)" "$CONCEPT" "0" "0" "0" "baseline: no game produced" \
             >> "$RESULTS"
         log ""
-        # Continue to main loop anyway
     else
         log "  Game found: $GAME_DIR"
 
@@ -160,8 +140,8 @@ if [[ $(completed_iterations) -eq 0 && "$SKIP_TO" != "loop" ]]; then
         AUDIT_DIR=$(ls -dt "$SCRIPT_DIR/audits"/*/ 2>/dev/null | head -1)
         if [[ -z "$AUDIT_DIR" || ! -f "$AUDIT_DIR/summary.txt" ]]; then
             log "  ERROR: No audit summary found for baseline."
-            printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
-                "$(git rev-parse --short HEAD)" "$CONCEPT" "0" "0" "0" "error" "baseline: no audit summary" \
+            printf '%s\t%s\t%s\t%s\t%s\t%s\n' \
+                "$(git rev-parse --short HEAD)" "$CONCEPT" "0" "0" "0" "baseline: no audit summary" \
                 >> "$RESULTS"
         else
             SCORE=$(grep -oP 'SCORE:\s*\K[\d.]+' "$AUDIT_DIR/summary.txt" | tail -1) || SCORE="0"
@@ -171,11 +151,10 @@ if [[ $(completed_iterations) -eq 0 && "$SKIP_TO" != "loop" ]]; then
             log "  Baseline score: $SCORE"
             log "  Sentinels: $SENTINEL_PASS pass, $SENTINEL_FAIL fail"
 
-            printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
-                "$(git rev-parse --short HEAD)" "$CONCEPT" "$SCORE" "$SENTINEL_PASS" "$SENTINEL_FAIL" "keep" "baseline" \
+            printf '%s\t%s\t%s\t%s\t%s\t%s\n' \
+                "$(git rev-parse --short HEAD)" "$CONCEPT" "$SCORE" "$SENTINEL_PASS" "$SENTINEL_FAIL" "baseline" \
                 >> "$RESULTS"
 
-            # Run evaluator to populate journal from baseline audit
             log "  Populating journal from baseline audit..."
             FULL_AUDIT=""
             for f in "$AUDIT_DIR"/*.txt; do
@@ -236,21 +215,20 @@ log ""
 while true; do
     ITERATION=$(($(completed_iterations) + 1))
     CONCEPT=$(( ((ITERATION - 1) % 5) + 1 ))
-    BEST_SCORE=$(best_score_for_concept "$CONCEPT")
+
+    # Get the concept description for context
+    CONCEPT_DESC=$(awk -v n="$CONCEPT" '
+        /^## Prompt '"$CONCEPT"':/ { found=1; next }
+        found && /^(## |---)/ { exit }
+        found && NF { print }
+    ' "$SCRIPT_DIR/test-prompts.md")
 
     log "========================================"
     log "  Iteration $ITERATION — Concept $CONCEPT"
-    log "  Best score for concept $CONCEPT: $BEST_SCORE"
     log "========================================"
 
-    # Save the current commit so we can revert on discard
-    BEFORE_COMMIT=$(git rev-parse HEAD)
-    log "Starting from commit $BEFORE_COMMIT"
-
     # ------------------------------------------------------------------
-    # Step 1: ANALYZE + MODIFY
-    # Claude reads the journal, results, and recent audit feedback,
-    # then modifies generator files. Commits the changes.
+    # Step 1: MODIFY
     # ------------------------------------------------------------------
 
     if [[ "$SKIP_TO" == "audit" || "$SKIP_TO" == "evaluate" ]]; then
@@ -260,7 +238,6 @@ while true; do
 
     log "[Step 1] Analyzing feedback and modifying generator..."
 
-    # Collect recent audit outputs for context (most recent audit directory)
     LATEST_AUDIT=""
     AUDIT_CONTEXT=""
     if [[ -d "$SCRIPT_DIR/audits" ]]; then
@@ -272,7 +249,6 @@ $(cat "$LATEST_AUDIT/summary.txt")
 
 ### Category Details (excerpts)
 "
-            # Include the scoring lines from each category output
             for f in "$LATEST_AUDIT"/*.txt; do
                 fname=$(basename "$f")
                 if [[ "$fname" != "summary.txt" ]]; then
@@ -293,8 +269,8 @@ $scores
 ## Current State
 
 Iteration: $ITERATION
-Concept for this iteration: $CONCEPT (see test-prompts.md for the description)
-Best score for concept $CONCEPT so far: $BEST_SCORE
+Next concept to be tested: $CONCEPT
+Concept description: $CONCEPT_DESC
 
 ## Journal
 $(cat "$JOURNAL")
@@ -368,16 +344,6 @@ Do NOT generate or audit a game. Only modify the generator files and commit."
 
     log "  $THESIS"
 
-    # Check if anything was actually committed
-    AFTER_MODIFY_COMMIT=$(git rev-parse HEAD)
-    if [[ "$BEFORE_COMMIT" == "$AFTER_MODIFY_COMMIT" ]]; then
-        log "  WARNING: No changes committed. Skipping this iteration."
-        printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
-            "$(git rev-parse --short HEAD)" "$CONCEPT" "0" "0" "0" "error" "no changes made" \
-            >> "$RESULTS"
-        continue
-    fi
-
     fi  # end skip-to check for modify step
 
     # ------------------------------------------------------------------
@@ -391,15 +357,15 @@ Do NOT generate or audit a game. Only modify the generator files and commit."
         timeout 3600 ./generate.sh "$CONCEPT" --model "$MODEL" 2>&1 | tee run.log || true
     fi
 
-    # Check for game by looking for run.sh, not exit codes
     GAME_DIR=$(ls -dt "$SCRIPT_DIR/games"/*/ 2>/dev/null | head -1)
     if [[ -z "$GAME_DIR" || ! -f "$GAME_DIR/run.sh" ]]; then
         log "  ERROR: No game produced (no run.sh found)."
-        printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
-            "$(git rev-parse --short HEAD)" "$CONCEPT" "0" "0" "0" "error" "no game produced: $THESIS_TEXT" \
+        printf '%s\t%s\t%s\t%s\t%s\t%s\n' \
+            "$(git rev-parse --short HEAD)" "$CONCEPT" "0" "0" "0" "generation failed: $THESIS_TEXT" \
             >> "$RESULTS"
-        git reset --hard "$BEFORE_COMMIT" 2>/dev/null
-        log "  Reverted to $BEFORE_COMMIT"
+        # Don't revert — prompt modifications are still valuable
+        log "  Continuing to next iteration."
+        SKIP_TO=""
         continue
     fi
 
@@ -416,38 +382,35 @@ Do NOT generate or audit a game. Only modify the generator files and commit."
         timeout 7200 ./audit.sh "$GAME_DIR" --model "$MODEL" 2>&1 | tee audit.log || true
     fi
 
-    # Check for audit summary, not exit codes
     AUDIT_DIR=$(ls -dt "$SCRIPT_DIR/audits"/*/ 2>/dev/null | head -1)
     if [[ -z "$AUDIT_DIR" || ! -f "$AUDIT_DIR/summary.txt" ]]; then
         log "  ERROR: No audit summary found."
-        printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
-            "$(git rev-parse --short HEAD)" "$CONCEPT" "0" "0" "0" "error" "no audit summary: $THESIS_TEXT" \
+        printf '%s\t%s\t%s\t%s\t%s\t%s\n' \
+            "$(git rev-parse --short HEAD)" "$CONCEPT" "0" "0" "0" "audit failed: $THESIS_TEXT" \
             >> "$RESULTS"
-        git reset --hard "$BEFORE_COMMIT" 2>/dev/null
-        log "  Reverted to $BEFORE_COMMIT"
+        # Don't revert — prompt modifications are still valuable
+        log "  Continuing to next iteration."
+        SKIP_TO=""
         continue
     fi
 
     log "  Audit complete: $AUDIT_DIR"
 
-    # Extract scores
     SCORE=$(grep -oP 'SCORE:\s*\K[\d.]+' "$AUDIT_DIR/summary.txt" | tail -1) || SCORE="0"
     SENTINEL_PASS=$(grep -oP 'SENTINEL PASS:\s*\K\d+' "$AUDIT_DIR/summary.txt" | tail -1) || SENTINEL_PASS="0"
     SENTINEL_FAIL=$(grep -oP 'SENTINEL FAIL:\s*\K\d+' "$AUDIT_DIR/summary.txt" | tail -1) || SENTINEL_FAIL="0"
     FAILED_IDS=$(grep -oP 'FAILED SENTINELS:\s*\K.*' "$AUDIT_DIR/summary.txt" | tail -1) || FAILED_IDS="none"
 
-    log "  Score: $SCORE (best: $BEST_SCORE)"
+    log "  Score: $SCORE"
     log "  Sentinels: $SENTINEL_PASS pass, $SENTINEL_FAIL fail"
     log "  Failed sentinels: $FAILED_IDS"
 
     # ------------------------------------------------------------------
     # Step 4: EVALUATE + UPDATE JOURNAL
-    # Claude reads the audit results and updates the journal.
     # ------------------------------------------------------------------
 
     log "[Step 4] Evaluating results and updating journal..."
 
-    # Collect full audit details for the evaluator
     FULL_AUDIT=""
     for f in "$AUDIT_DIR"/*.txt; do
         fname=$(basename "$f")
@@ -461,9 +424,8 @@ $(cat "$f")
 
 ## Iteration $ITERATION Results
 
-Concept: $CONCEPT
+Concept: $CONCEPT ($CONCEPT_DESC)
 Score: $SCORE
-Best score for concept $CONCEPT: $BEST_SCORE
 Sentinel passes: $SENTINEL_PASS
 Sentinel failures: $SENTINEL_FAIL
 Thesis: $THESIS_TEXT
@@ -497,25 +459,9 @@ Write the updated journal to $JOURNAL using the Write tool. Output nothing else.
         --permission-mode bypassPermissions \
         || true
 
-    # ------------------------------------------------------------------
-    # Step 5: KEEP OR DISCARD
-    # ------------------------------------------------------------------
-
-    IMPROVED=$(awk "BEGIN { print ($SCORE > $BEST_SCORE) ? \"yes\" : \"no\" }")
-
-    if [[ "$IMPROVED" == "yes" ]]; then
-        STATUS="keep"
-        log "  KEEP — score improved ($BEST_SCORE → $SCORE)"
-    else
-        STATUS="discard"
-        log "  DISCARD — score did not improve ($SCORE <= $BEST_SCORE)"
-        git reset --hard "$BEFORE_COMMIT" 2>/dev/null
-        log "  Reverted to $BEFORE_COMMIT"
-    fi
-
     # Log to results.tsv
-    printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
-        "$(git rev-parse --short HEAD)" "$CONCEPT" "$SCORE" "$SENTINEL_PASS" "$SENTINEL_FAIL" "$STATUS" "$THESIS_TEXT" \
+    printf '%s\t%s\t%s\t%s\t%s\t%s\n' \
+        "$(git rev-parse --short HEAD)" "$CONCEPT" "$SCORE" "$SENTINEL_PASS" "$SENTINEL_FAIL" "$THESIS_TEXT" \
         >> "$RESULTS"
 
     # Clear skip-to after first iteration so subsequent iterations run fully
