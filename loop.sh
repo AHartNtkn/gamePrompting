@@ -249,16 +249,16 @@ $(cat "$LATEST_AUDIT/summary.txt")
 
 ### Category Details (excerpts)
 "
+            # Include full audit output, not just scores — the detailed
+            # observations, flaw analysis, and reasoning are what the modify
+            # agent needs to address all feedback, not just the numbers.
             for f in "$LATEST_AUDIT"/*.txt; do
                 fname=$(basename "$f")
                 if [[ "$fname" != "summary.txt" ]]; then
-                    scores=$(grep -E '^[A-Z][0-9]+:|^S[0-9]+:|^EARNED:|^POSSIBLE:|^PASSED:|^FAILED:|^CATEGORY:' "$f" 2>/dev/null || true)
-                    if [[ -n "$scores" ]]; then
-                        AUDIT_CONTEXT="${AUDIT_CONTEXT}
+                    AUDIT_CONTEXT="${AUDIT_CONTEXT}
 #### $fname
-$scores
+$(cat "$f")
 "
-                    fi
                 fi
             done
         fi
@@ -299,12 +299,17 @@ Write your architectural assessment in your thinking. If the current architectur
 
 **The default is to consider structural change.** Adding more paragraphs to game-creation-prompt.md is the LAST resort, not the first. Every iteration that just appends enforcement text to an already-long prompt is a missed opportunity to improve the system's architecture.
 
-### Step 2: Form a thesis
+### Step 2: Address all actionable feedback
 
-Based on the journal, audit feedback, and your architectural assessment:
-- What is the highest-leverage change you can make this iteration?
-- Is it a structural change (new agent, restructured pipeline, extracted reference doc) or a content change (revised instructions, new examples, stronger guidance)?
-- Why is this the right level of intervention — why wouldn't a simpler or more ambitious change work better?
+Read the full audit output above — not just the scores, but the observations, flaw descriptions, and specific critiques. Every piece of actionable feedback is a potential improvement. Do not cherry-pick only the worst category.
+
+For each actionable critique in the audit:
+- Can you address it with an architectural change (new agent, new verification step)?
+- Can you address it with a content change (revised instructions, new examples)?
+- Is it already addressed by existing prompt text that the generator ignored? (If so, the fix is structural — enforcement, not repetition.)
+- Is it specific to one concept/genre and not generalizable? (Note it in the commit message but don't add concept-specific rules.)
+
+Prioritize breadth over depth. Addressing 8 moderate issues is better than perfecting 1 category.
 
 ### Step 3: Implement
 
