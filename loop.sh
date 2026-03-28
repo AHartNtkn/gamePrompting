@@ -327,12 +327,16 @@ Write your architectural assessment in your thinking. If the current architectur
 
 ### Step 2: Address all actionable feedback
 
-Read the full audit output above — not just the scores, but the observations, flaw descriptions, and specific critiques. Every piece of actionable feedback is a potential improvement. Do not cherry-pick only the worst category.
+Two sources of feedback are provided above:
 
-For each actionable critique in the audit:
+1. **The audit output** — what's wrong with the game that was produced. Read the full text, not just scores.
+2. **The generation process summary** — a factual timeline of how the generator built the game: what phases it went through, which sub-agents it used (or didn't), what errors it hit, what it play-tested, what it left incomplete. Process problems (e.g., the generator didn't use the balance-checker, or skipped play-testing, or spent all its time on implementation and none on iteration) require different fixes than game quality problems.
+
+For each actionable issue from EITHER source:
 - Can you address it with an architectural change (new agent, new verification step)?
 - Can you address it with a content change (revised instructions, new examples)?
 - Is it already addressed by existing prompt text that the generator ignored? (If so, the fix is structural — enforcement, not repetition.)
+- Is it a process failure (generator didn't follow instructions) vs a content gap (instructions didn't exist)?
 - Is it specific to one concept/genre and not generalizable? (Note it in the commit message but don't add concept-specific rules.)
 
 Prioritize breadth over depth. Addressing 8 moderate issues is better than perfecting 1 category.
@@ -391,31 +395,21 @@ Do NOT generate or audit a game. Only modify the generator files and commit."
         timeout 86400 ./generate.sh "$CONCEPT" --model "$MODEL" 2>&1 | tee run.log || true
     fi
 
-    # Summarize the generation log into a timeline for the evaluate step
-    if [[ -s "$SCRIPT_DIR/generation.log" ]]; then
+    # Summarize the generation log into a timeline for the evaluate step.
+    # Prompt is read from file so it can be edited without restarting the loop.
+    SUMMARIZER_PROMPT_FILE="$SCRIPT_DIR/generator/summarizer-prompt.md"
+    if [[ -s "$SCRIPT_DIR/generation.log" && -f "$SUMMARIZER_PROMPT_FILE" ]]; then
         log "  Summarizing generation log..."
-        GEN_SUMMARY_PROMPT="You are a process analyst. Read the generation log below and produce a factual timeline of what the generator agent did. Report only what you can observe in the log. Do not editorialize, draw conclusions about quality, or declare things 'correct' or 'sound' — you are reporting events, not evaluating outcomes.
 
-Focus on:
-
-1. **Phases and time allocation** — how long on design vs implementation vs play-testing vs iteration
-2. **Sub-agent usage** — which agents were spawned, what they found
-3. **Errors and recoveries** — crashes, import failures, tmux issues, files rewritten
-4. **Play-testing observations** — what the agent found during play, what it tried to fix
-5. **Incomplete work** — anything the agent started but didn't finish (e.g., killed by timeout mid-fix)
-6. **Process failures** — did it skip play-testing? Did it not use sub-agents? Did it spend too long on one phase?
-
-Output a timeline with timestamps (relative to start) and one line per significant event. End with a 'PROCESS ISSUES' section listing any problems with HOW the game was built (not what's wrong with the game itself — the auditor handles that). If no process issues were observed, say so — do not substitute a positive judgment like 'architecture is sound' or 'no issues found, game is complete.'
-
-## Generation Log (tool contents truncated)
-$(grep '^{' "$SCRIPT_DIR/generation.log" | jq -c --unbuffered '
+        # Pre-filter: truncate tool inputs/outputs to keep context manageable
+        FILTERED_LOG=$(grep '^{' "$SCRIPT_DIR/generation.log" | jq -c --unbuffered '
 if .type == "assistant" and (.message.content[]? | select(.type == "tool_use")) then
   .message.content = [.message.content[] |
     if .type == "tool_use" then
       .input = (
         if .name == "Write" or .name == "Read" or .name == "Edit" then {file_path: .input.file_path}
         elif .name == "Bash" then {command: (.input.command | .[0:200])}
-        elif .name == "Agent" then {description: .input.description}
+        elif .name == "Agent" then {description: .input.description, prompt: (.input.prompt | tostring | .[0:500])}
         else .input | to_entries | map(select(.value | tostring | length < 200)) | from_entries
         end
       )
@@ -427,7 +421,12 @@ elif .type == "user" and (.message.content[]? | select(.type == "tool_result")) 
     else . end
   ]
 else . end
-' 2>/dev/null)"
+' 2>/dev/null)
+
+        GEN_SUMMARY_PROMPT="$(cat "$SUMMARIZER_PROMPT_FILE")
+
+## Generation Log (tool contents truncated)
+$FILTERED_LOG"
 
         GEN_SUMMARY_LOG="$LOG_DIR/gen-summary-iter${ITERATION}.log"
         run_claude "$GEN_SUMMARY_LOG" "$GEN_SUMMARY_PROMPT" \
