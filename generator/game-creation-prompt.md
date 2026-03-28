@@ -38,7 +38,7 @@ Before writing code, design the game's systems (write your design to `GAME_OUTPU
 3. **What does a turn look like?** Describe the player's action loop — what information do they see, what choices do they have, what happens after they choose?
 4. **What creates tension?** Identify the sources of pressure, scarcity, or conflict that make decisions difficult. A game without tension is a spreadsheet.
 5. **What varies between playthroughs?** Identify what changes across runs — starting conditions, procedural generation, branching consequences, player strategy. **At least 4 substantive content elements** (encounter configurations, event sequences, NPC attributes, resource distributions, terrain compositions) must be randomly drawn from a pool each run. The pool must be at least 1.5× the needed content for each variable slot — a pool of exactly the right size is not randomization. A player who has finished 3 runs should still encounter genuinely new situations on their 4th run.
-6. **What are the game's phases?** Name at least three distinct phases (early, mid, late). For each: what triggers the transition into it? What new decisions become available? What old decisions close off or become less important? If you cannot describe concrete differences between phases, the game has no arc — design one before writing code.
+6. **What are the game's phases?** Name at least three distinct phases (early, mid, late). For each: what triggers the transition into it? What new decisions become available? What old decisions close off or become less important? If you cannot describe concrete differences between phases, the game has no arc — design one before writing code. **Warning**: if your game has a setup phase (choosing layout, picking starting options, building the initial configuration), the remaining run must not be mere execution of that setup — the mid and late game must introduce genuinely new decision types the player wasn't facing in setup. Otherwise, the interesting mechanics are all front-loaded and the rest of the run is routine.
 7. **What doesn't the player know?** List at least three things the player must actively discover, infer, or investigate — things NOT displayed by default. What forces the player to commit under uncertainty? What can be learned through play that changes strategy? Hidden information must be discoverable, not permanently opaque.
 
 ### Phase 2: Implementation
@@ -145,6 +145,24 @@ Then perform this **mandatory pre-delivery checklist** yourself before finishing
 - "Food +3" is insufficient. "Elena spots a cache of dried rations tucked under a fallen log — enough for three days if rationed. [+3 food]" is sufficient.
 - Each named character must respond distinctively to events, not with a template that merely substitutes their name.
 
+**Loop evolution check** (required for management, simulation, and strategy games):
+- Write down every distinct decision type available to the player on turn 1.
+- Write down every distinct decision type available at the midpoint.
+- Write down every decision type that first becomes available in the final 25%.
+- If all three lists are the same, your game has no loop evolution. Fix: at minimum, one new decision type must unlock in the mid-game (a new mechanic, a new category of options, a new system that becomes relevant) and one in the late game. New decisions do not mean more of the same type — they mean qualitatively different questions the player wasn't facing before.
+- **The setup-then-execute trap**: If your game has a rich setup phase followed by a repetitive execution phase (e.g., place the store layout on day 1, then repeat order/restock/advance for 29 days), the execution phase will score badly. Either allow setup decisions to be revised mid-game as the player learns more, or introduce new decision categories that only unlock later (new product lines at reputation thresholds, new store sections when cash permits, new staff roles in the mid-game).
+
+**Death march check** (required):
+- Simulate your losing trajectory. Identify the earliest turn at which a skilled player can no longer change the outcome — when even perfect play cannot recover.
+- If this point is more than 30% before game end, you have a death march: a stretch of turns where the player executes actions toward a predetermined end with no real agency remaining.
+- Fix: either (a) detect unwinnable states and end the game cleanly at that point, or (b) trigger a qualitatively different "last stand" phase when the player crosses the losing threshold — new desperate options, a changed game context, a genuine (if low-probability) recovery path. An unwinnable state that lasts 15 turns is not tension. It is wasted time.
+
+**Reward diversity check** (required):
+- List every type of reward your game provides. For each, write what player value it delivers.
+- If all rewards reduce to the same single metric (money, points, a single bar), your reward structure is impoverished. Add at minimum two qualitatively distinct reward types: one that opens access to new content the player couldn't reach before (new options, new areas, new capabilities), and one that provides recognition at milestone moments.
+- Milestone rewards must be explicitly acknowledged in game output as named moments — not just as stat changes. "Net +$47. Day ends." is not a milestone. "Day 8: First net-positive day. The store turns a corner." is.
+- Check: does your game contain at least one moment where the player feels genuinely rewarded, not just less punished? If skillful play only delays punishment and never produces a positive experience, redesign your reward structure.
+
 ---
 
 ## Design Principles
@@ -203,6 +221,11 @@ A game that outputs only mechanical readouts — "+3 food," "Trust: 20→31," "H
 - Use no fourth-wall language: "press N to continue," "select option 3," "click here to confirm." The player is in the world, not outside it.
 - Character responses to events must be individual, not templated. Different characters react differently to the same hardship. A template with a name substituted is not characterization.
 
+**Systems-heavy games face a specific narrative failure mode**: the output becomes a stream of stat changes with no world present. "Revenue: +$342. Reputation: -2. Employee leveled up." is a system report, not a game experience. Fix:
+- Every event must include at least one sentence of sensory or social content that situates the player in a real situation before reporting the numbers. The world exists first; the mechanical consequence follows.
+- Named entities (employees, customers, locations) must appear as characters in output, not as data labels. "Riley (cashier, speed 3)" is a label. "Riley waves off the queue with an apology — she knows she's been slow today" is a character.
+- Milestone moments (first profitable day, bankruptcy warning, major goal reached) must acknowledge the fictional stakes. The player survived or achieved something. Name it before presenting the numbers.
+
 ### The Game Must Have Phases
 
 A game where turn 30 feels identical to turn 5 has failed at structure. Design explicit phases where the decision context changes — not because time passes, but because game state shifts in ways that alter what decisions matter.
@@ -241,6 +264,8 @@ Do not display all relevant data on the default screen. Information not immediat
 **Genuine uncertainty requirement**: At least one important game variable must be *genuinely uncertain* for 5 or more turns — not just hidden-until-investigated, but actively unknowable through any single observation. The player must commit to decisions without knowing it precisely. Good candidates: opponent strategy mode duration, exact formula weights that govern outcomes, a route's hazard composition before scouting, how an NPC will react to a confrontation.
 
 Do not reveal this variable for free in the turn log or status display. Require the player to spend a resource to get an approximation — not the exact value, just a range or indicator. This creates the tension of committing under uncertainty, one of the most powerful engagement drivers.
+
+**Management and simulation games are especially prone to the perfect-information failure.** These genres default to displaying every stat on every screen at all times — and this is not good design, it eliminates tension. A management game where exact inventory counts, exact demand rates, exact employee failure probabilities, and exact event likelihoods are all always visible is a spreadsheet. At least two parameters that affect long-run strategy must be hidden by default and discoverable only through active investigation or observation over time: demand elasticity for specific products (requires testing different price points), individual employee failure probability (observable only through enough experience), exact synergy formulas (discoverable through experimentation), or competitor behavior patterns (requires spending a turn to assess). The act of discovering these parameters is itself gameplay — it teaches mastery and rewards investment.
 
 ### Failure Is Interesting
 
@@ -309,6 +334,7 @@ These are specific patterns that ruin games. Check your design against each one.
 - **Lateral progression over vertical progression.** New options that are situationally useful (sidegrades) create richer decisions than universally better replacements (upgrades) that obsolete earlier options.
 - **Progression must require player choices, not just time.** Auto-unlocking stats that require no decision are timers, not progression. If a character's skill goes up every 10 turns automatically regardless of what the player does, delete it and put the design energy into a system that requires decisions. For every stat or attribute that changes over time, ask: "Does the player actively choose how this changes?" If no, it is not a game mechanic — it is a passive number that happens to be visible.
 - **Progression paths must branch.** If every player who reaches the same point ends up with the same upgrades, there was no meaningful choice. Design upgrade paths where different players make different decisions and end up with genuinely different capabilities.
+- **Auto-progression that changes nothing is not progression.** If progression exists (experience, unlocks, upgrades), players must actively choose between distinct paths. All-players-get-the-same-thing-automatically (XP → speed+1, every 10 turns, no choice) is a timer masquerading as a system. The player must face a real fork: upgrade path A vs. path B, where A enables different actions than B. Stat-only improvements that don't change what the player can do are not progression — they are pacing adjustments. Either make the player choose between non-equivalent options, or remove the progression system.
 
 ### Information
 
@@ -361,3 +387,4 @@ This audit takes 10 minutes and eliminates the most common failure that produces
 - **Make options asymmetric.** If factions, classes, or choices exist, they must be mechanically distinct — different strengths, different playstyles, different decisions. Reskinned symmetry is not variety.
 - **Test for unwinnable states.** Can the player reach a dead end where progress is impossible but the game doesn't recognize it? If yes, fix it — either prevent the state or detect and handle it.
 - **Include negative feedback loops.** If winning begets more winning without limit, the first player to pull ahead wins every time. Include catch-up mechanics or diminishing returns on advantage.
+- **Difficulty must change strategy, not just numbers.** If your game offers difficulty settings or scaling, each level must make at least one previously viable strategy non-viable or open at least one strategy not available at other levels. Changing only starting resources or error tolerance — where all difficulty levels produce the same optimal decisions with different margins — creates runs that feel identical with different runway lengths. True difficulty variation forces the player to think differently, not just have more buffer.
