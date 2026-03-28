@@ -36,9 +36,10 @@ Before writing code, design the game's systems (write your design to `GAME_OUTPU
 1. **What are the core systems?** List every distinct system (e.g., combat, economy, movement, faction relations). For each, describe what state it tracks and what decisions it creates for the player.
 2. **How do systems interact?** For every pair of systems, identify at least one interaction. If two systems don't interact, one of them probably shouldn't exist. Cut systems that don't connect.
 3. **What does a turn look like?** Describe the player's action loop — what information do they see, what choices do they have, what happens after they choose?
-4. **What creates tension, and how does it escalate?** Identify the sources of pressure, scarcity, or conflict that make decisions difficult. A game without tension is a spreadsheet. Then: name the **natural mechanism** that makes mid-game feel different from early game, and late-game different from mid. The answer must be grounded in system dynamics — what has been depleted, accumulated, or irreversibly changed through player and world actions? If your answer is "enemies get stronger after turn 15," that is a scripted trigger, not an escalation mechanism. See the **Escalation Must Emerge From Systems** principle below.
-5. **What varies between playthroughs, structurally?** Identify what changes across runs that is **structural, not numerical** — different procedural topologies (not just shuffled room contents), different starting conditions that require different strategies (not just different starting stats). Two runs with different seeds must demand meaningfully different approaches. Describe at least two structural elements that generate genuinely distinct situations.
-6. **What does the player NOT know?** Identify at least one system where the player must make decisions without complete information — guard routines that must be observed before they're understood, NPC intentions inferred from behavior, maps that must be explored rather than provided, resource locations estimated rather than displayed. The player should sometimes be wrong, and the game should make being wrong matter.
+4. **What creates tension?** Identify the sources of pressure, scarcity, or conflict that make decisions difficult. A game without tension is a spreadsheet.
+5. **What varies between playthroughs?** Identify what changes across runs — starting conditions, procedural generation, branching consequences, player strategy.
+6. **What are the game's phases?** Name at least three distinct phases (early, mid, late). For each: what triggers the transition into it? What new decisions become available? What old decisions close off or become less important? If you cannot describe concrete differences between phases, the game has no arc — design one before writing code.
+7. **What doesn't the player know?** List at least three things the player must actively discover, infer, or investigate — things NOT displayed by default. What forces the player to commit under uncertainty? What can be learned through play that changes strategy? Hidden information must be discoverable, not permanently opaque.
 
 ### Phase 2: Implementation
 
@@ -97,12 +98,16 @@ Play at least two sessions making different choices. Check:
 - Does the game communicate clearly what happened after each action?
 - Is there at least one genuinely interesting decision within the first 2 minutes?
 - Do different choices lead to observably different outcomes?
-- Does the late game feel meaningfully different from the early game? If the difference is created by a counter or timer crossing a threshold — that's a scripted phase trigger, not real escalation. The late game should feel different because the world state has changed through play.
-- Were there moments where you had to act without complete information? If every relevant fact was visible on screen, the game has no perception uncertainty. Add hidden information — guard routines you had to infer, room contents you couldn't see until entering, intentions that weren't stated.
 
 ### Phase 4: Iteration
 
 Fix every problem you find during play-testing. Then play again to verify the fixes. Do not deliver a game you haven't verified works.
+
+After play-testing, run the balance-checker with these explicit questions:
+1. **Dominant strategy test**: What is the single highest-value strategy? How much better is it than the second-best (in %)? If one strategy wins 80%+ of situations regardless of context, it must be redesigned.
+2. **Death spiral test**: Once a player starts losing, can they realistically recover? Test the worst-case scenario 10+ turns in. If recovery is mathematically impossible, design a recovery mechanism.
+3. **Early investment test**: Does performing better in the first 25% of the game lead to meaningfully better outcomes in the last 25%? If not, early decisions don't matter.
+4. **Useless option test**: Is there any option that is dominated by another option in all situations? Report it — either fix it or remove it.
 
 ---
 
@@ -151,41 +156,32 @@ Every player action must produce output that tells them:
 
 "You attack the goblin" is unacceptable. "You slash the goblin's leg (12 damage, crippling blow). It stumbles — movement halved, formation broken. The adjacent goblin turns to check on it, exposing its flank" tells the player what happened, why, and what opportunities it created.
 
-### Escalation Must Emerge From Systems
+### The Game Must Have Phases
 
-The game must feel different in early, mid, and late play — but the mechanism matters. Do not use scripted phase triggers:
+A game where turn 30 feels identical to turn 5 has failed at structure. Design explicit phases where the decision context changes — not because time passes, but because game state shifts in ways that alter what decisions matter.
 
-```python
-if turn >= 15:
-    enemy_strength *= 2
-    unlock_tier_2()
-```
+Phase transitions must be triggered by concrete state changes: a resource crossing a threshold, an opponent changing tactics, a map region changing hands, a character reaching a capability milestone. "Things escalate over time" is not a phase — it's a slope, not a step.
 
-This creates the *appearance* of phases while the underlying systems remain flat. The auditor will detect it and score it as structural autopilot.
+Each phase should introduce new decision types that weren't available or relevant before, and retire some old ones. Early game decisions (setup, positioning, initial investment) should not still be the primary activity in late game. If the player faces the same questions at turn 30 as turn 5, redesign.
 
-Instead, design systems where natural dynamics produce escalation:
-- **Resource depletion shifts priorities.** Early in a survival game, you search for food. Later you've depleted nearby sources — not because of a timer, but because you harvested them.
-- **Capability accumulation opens strategies.** New options become viable when earned through play, not unlocked by crossing a level threshold.
-- **Environmental consequences compound.** The world responds to what the player does. Securing one area means threats concentrate elsewhere. The challenge escalates because earlier problems were solved, not because a counter incremented.
-- **Information asymmetry resolves.** Early game, the player doesn't know the map or the enemy patterns. As they learn, the game shifts from exploration to exploitation — a natural phase transition driven by knowledge accumulation.
+### Information Must Be Earned
 
-If you catch yourself writing `if turn >= X:` or `if score >= X:` as a phase trigger, stop. Find the system that naturally creates this transition. A game whose phases would disappear if you removed all threshold-triggered conditionals is a broken simulation.
+The player should not have perfect information. Design at least one category of genuinely hidden information that the player can actively discover, infer from evidence, or investigate at cost:
 
-### Incomplete Information Is Required
+- Opponent capabilities or behavioral patterns revealed through engagement
+- Territory contents, environmental hazards, or faction states revealed through scouting
+- Item effects, system parameters, or hidden mechanics revealed through experimentation
+- Future conditions that can be partially inferred from visible leading indicators
 
-Perfect-information games are easier to design but shallower to play. At least one core decision system must operate under incomplete information — the player must sometimes act without knowing a relevant fact, form hypotheses, and have those hypotheses tested by the game.
+Hidden information must have a **discovery mechanism** — a way the player can learn it if they choose to invest in finding out. Permanently hidden information is arbitrary punishment. Hidden information with a discovery path creates tension, investment, and reward.
 
-Examples:
-- Guard patrol routes that must be **observed** before they're understood (not displayed in a sidebar)
-- NPC intentions that must be **inferred** from behavior, not stated
-- Map sections that are **revealed by exploration**, not provided at game start
-- Enemy capabilities that are **discovered in play**, not listed in a manual
-
-Design the game so that gathering information is itself a meaningful activity — and design the information gaps so that being wrong has consequences. A player who misread a guard's schedule should be punished in a way that reveals what they got wrong.
+Do not display all relevant data on the default screen. Information not immediately needed for the current decision should require the player to actively request it.
 
 ### Failure Is Interesting
 
 When the player fails — loses a battle, goes bankrupt, gets caught — the result should be an interesting new game state, not just "game over, try again." A colony that survives a disaster in a weakened state is more interesting than a reload. A character who escapes capture with nothing is more interesting than a death screen. Design failure states that create new gameplay, not ones that end it.
+
+**Every major failure mode must have at least one non-obvious recovery path.** A reputation death spiral that is unrecoverable after 10% of a run destroys the player experience for 90% of turns. A combat situation that becomes unwinnable by turn 3 of a 30-turn fight makes the remaining turns meaningless. For every significant negative feedback loop, design a counter-pressure: a slower recovery option, a new action available only when desperate, a mechanic that activates when you're losing. Failure should open new gameplay options, not just extend a death march.
 
 ---
 
@@ -200,6 +196,14 @@ These are specific patterns that ruin games. Check your design against each one.
 - **Do not use raw subtraction for damage (attack - defense).** This formula breaks at extremes. Use multiplicative, logarithmic, or threshold-based approaches.
 - **Do not create type-advantage cycles as the entire combat system** (fire beats ice beats lightning). If knowing the enemy type is sufficient to determine the optimal action, combat has no decisions.
 
+**What good combat looks like** (positive guidance):
+
+- **State-driven action availability.** Certain moves are only available in certain positions or states. Getting an opponent into a clinch opens grapple options that weren't available at range. Breaking an arm removes their ability to defend with it. Available actions change based on the current situation — the same action set every turn is not combat, it is a menu.
+- **Resource management within the fight.** Stamina, momentum, advantage points, injury accumulation — something that the player spends and must manage across turns. This creates commitment, timing decisions, and turning points.
+- **Opponent legibility.** Players should be able to observe opponent behavior and learn their patterns, weaknesses, and preferred strategies. Opponents should be predictable-once-understood, not arbitrary. Different opponents should require different approaches.
+- **Meaningful body part / location targeting.** If the game simulates body parts, each should have cascading mechanical consequences, not just HP labels. A damaged leg reduces movement options and creates new attack surfaces. A broken grip arm removes defend options. Target selection should be a tactical decision with tradeoffs — targeting a protected location vs. a weak but low-value one.
+- **Both range and depth.** Individual moves should have risk/reward tradeoffs (high damage with vulnerability, low damage with safety). Fights should have emergent turning points based on accumulated state, not just "who has more HP."
+
 ### Economy
 
 - **Do not default to three generic resources** (gold/wood/stone). If you have resources, each must serve a qualitatively different purpose with unique mechanics (one decays, one is shared, one is spatial, etc.).
@@ -211,6 +215,8 @@ These are specific patterns that ruin games. Check your design against each one.
 - **Upgrades must change what the player does, not just modify numbers.** "+5% damage" is not a meaningful upgrade. "Your attacks now pierce armor" or "You can now bribe guards" changes gameplay.
 - **Do not gate content behind level/XP grinding.** Gate it behind demonstrated knowledge, acquired tools, or meaningful choices.
 - **Lateral progression over vertical progression.** New options that are situationally useful (sidegrades) create richer decisions than universally better replacements (upgrades) that obsolete earlier options.
+- **Progression must require player choices, not just time.** Auto-unlocking stats that require no decision are timers, not progression. If a character's skill goes up every 10 turns automatically regardless of what the player does, delete it and put the design energy into a system that requires decisions. For every stat or attribute that changes over time, ask: "Does the player actively choose how this changes?" If no, it is not a game mechanic — it is a passive number that happens to be visible.
+- **Progression paths must branch.** If every player who reaches the same point ends up with the same upgrades, there was no meaningful choice. Design upgrade paths where different players make different decisions and end up with genuinely different capabilities.
 
 ### Information
 
@@ -226,6 +232,13 @@ These are specific patterns that ruin games. Check your design against each one.
 - **The world should operate autonomously.** Events, NPC behaviors, and system dynamics should continue whether or not the player is involved. The player is one actor in a living world, not the center of a theme park.
 - **Random events must offer decisions.** "A flood! -20 food" is not gameplay. "A flood threatens the southern fields. Divert workers to build levees (lose production) or evacuate crops (save some, lose the fields)?" is gameplay.
 
+**If the game has AI opponents, rivals, or NPCs that interact with the player:**
+- They must pursue goals using the same systems the player uses — no special AI-only rules or exemptions.
+- Their behavior must be **legible**: a player who understands their goals should be able to predict their actions. Opponents should feel like they have strategies, not like they are random number generators.
+- They must **react to player actions** — if the player exploits a weakness repeatedly, the opponent adapts. Static opponents who execute the same script regardless of what the player does are not adversaries.
+- Different opponents must have **meaningfully different behavioral profiles** — not just different stat values, but different priorities, preferred moves, and vulnerabilities. Fighting opponent A should require different strategy than fighting opponent B.
+- Opponent AI quality is a first-class design concern, not an afterthought. Budget significant design time for it.
+
 ### Structure
 
 - **Build the gameplay loop before anything else.** No title screens, no settings menus, no character creation wizards. Build the core loop first and verify it's fun. Chrome comes last.
@@ -233,14 +246,3 @@ These are specific patterns that ruin games. Check your design against each one.
 - **Make options asymmetric.** If factions, classes, or choices exist, they must be mechanically distinct — different strengths, different playstyles, different decisions. Reskinned symmetry is not variety.
 - **Test for unwinnable states.** Can the player reach a dead end where progress is impossible but the game doesn't recognize it? If yes, fix it — either prevent the state or detect and handle it.
 - **Include negative feedback loops.** If winning begets more winning without limit, the first player to pull ahead wins every time. Include catch-up mechanics or diminishing returns on advantage.
-- **Do not use scripted phase triggers.** `if turn >= 20: spawn_boss()` is not game design. See **Escalation Must Emerge From Systems** above.
-
-### Stealth, Disguise, and Social Systems
-
-For games involving infiltration, deception, disguise, or social navigation:
-
-- **Do not reduce stealth to a single suspicion meter.** A 0–100 "suspicion" bar is the stealth equivalent of HP. It collapses rich social dynamics to a single number. Real stealth has multiple dimensions: visibility (can they see you?), behavior (do you look like you belong?), identity (are credentials being checked?), and alert state (are guards actively searching?). These should be separate systems that interact.
-- **Cover and disguise must have real mechanical teeth.** Being "in disguise" cannot be a passive benefit that you either have or lose. It must require active maintenance — restricted areas check credentials, NPCs recognize inconsistencies from past interactions, different roles face different verification scrutiny. The player must manage their cover moment-to-moment.
-- **Detection must have observable intermediate states.** The transition from "undetected" to "caught" must pass through observable states (curious, suspicious, investigating, pursuing) that give the player information and response time. Binary stealth (perfectly hidden → immediately caught) removes all agency.
-- **Information gathering is gameplay, not preamble.** If the game involves learning secrets or hacking systems, the process of gathering information must involve meaningful decisions — who to approach, what evidence to collect, what risks to take. "Investigate" as a single button with a progress bar is not gameplay.
-- **Multiple win conditions create tension throughout.** If the player has a primary objective (destroy the station) and a secondary one (escape alive), these should create strategic tension from the start — actions that advance the primary goal may compromise the secondary. Don't make the secondary objective an afterthought unlocked only at the end.
