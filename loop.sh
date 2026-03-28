@@ -392,9 +392,11 @@ Do NOT generate or audit a game. Only modify the generator files and commit."
     fi
 
     # Summarize the generation log into a timeline for the evaluate step
-    if [[ -s run.log ]]; then
+    if [[ -s "$SCRIPT_DIR/generation.log" ]]; then
         log "  Summarizing generation log..."
-        GEN_SUMMARY_PROMPT="You are a process analyst. Read the generation log below and produce a concise timeline of what the generator agent did. Focus on:
+        GEN_SUMMARY_PROMPT="You are a process analyst. Read the generation log below and produce a factual timeline of what the generator agent did. Report only what you can observe in the log. Do not editorialize, draw conclusions about quality, or declare things 'correct' or 'sound' — you are reporting events, not evaluating outcomes.
+
+Focus on:
 
 1. **Phases and time allocation** — how long on design vs implementation vs play-testing vs iteration
 2. **Sub-agent usage** — which agents were spawned, what they found
@@ -403,10 +405,29 @@ Do NOT generate or audit a game. Only modify the generator files and commit."
 5. **Incomplete work** — anything the agent started but didn't finish (e.g., killed by timeout mid-fix)
 6. **Process failures** — did it skip play-testing? Did it not use sub-agents? Did it spend too long on one phase?
 
-Output a timeline with timestamps (relative to start) and one line per significant event. End with a 'PROCESS ISSUES' section listing any problems with HOW the game was built (not what's wrong with the game itself — the auditor handles that).
+Output a timeline with timestamps (relative to start) and one line per significant event. End with a 'PROCESS ISSUES' section listing any problems with HOW the game was built (not what's wrong with the game itself — the auditor handles that). If no process issues were observed, say so — do not substitute a positive judgment like 'architecture is sound' or 'no issues found, game is complete.'
 
-## Generation Log
-$(cat run.log)"
+## Generation Log (tool contents truncated)
+$(grep '^{' "$SCRIPT_DIR/generation.log" | jq -c --unbuffered '
+if .type == "assistant" and (.message.content[]? | select(.type == "tool_use")) then
+  .message.content = [.message.content[] |
+    if .type == "tool_use" then
+      .input = (
+        if .name == "Write" or .name == "Read" or .name == "Edit" then {file_path: .input.file_path}
+        elif .name == "Bash" then {command: (.input.command | .[0:200])}
+        elif .name == "Agent" then {description: .input.description}
+        else .input | to_entries | map(select(.value | tostring | length < 200)) | from_entries
+        end
+      )
+    else . end
+  ]
+elif .type == "user" and (.message.content[]? | select(.type == "tool_result")) then
+  .message.content = [.message.content[] |
+    if .type == "tool_result" then .content = (.content | tostring | .[0:300])
+    else . end
+  ]
+else . end
+' 2>/dev/null)"
 
         GEN_SUMMARY_LOG="$LOG_DIR/gen-summary-iter${ITERATION}.log"
         run_claude "$GEN_SUMMARY_LOG" "$GEN_SUMMARY_PROMPT" \

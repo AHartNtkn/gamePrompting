@@ -11,6 +11,7 @@ results.tsv
 journal.md
 run.log
 audit.log
+generation.log
 generation-summary.md
 logs/
 games/
