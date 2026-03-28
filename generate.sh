@@ -131,9 +131,30 @@ echo ""
 PROMPT_TMP=$(mktemp)
 echo "$FULL_PROMPT" > "$PROMPT_TMP"
 
-# Save full stream-json to generation.log for the summarizer.
-# Display truncated version on terminal for readability.
+# Two output paths from the stream:
+# 1. generation.log — compact valid JSON with large content truncated (for the summarizer)
+# 2. terminal — heavily truncated one-liners (for human readability)
 GEN_LOG="$SCRIPT_DIR/generation.log"
+
+JQ_COMPACT='del(.session_id, .uuid, .timestamp, .parent_tool_use_id, .rate_limit_info, .mcp_servers, .slash_commands, .apiKeySource, .claude_code_version, .output_style, .agents, .skills, .plugins, .fast_mode_state, .permissionMode, .modelUsage, .permission_denials, .message.model, .message.id, .message.usage, .message.stop_reason, .message.stop_sequence, .message.context_management, .tool_use_result, .total_cost_usd, .usage, .duration_ms, .duration_api_ms)
+| if .type == "assistant" then
+    .message.content = [.message.content[]? |
+      if .type == "tool_use" then
+        .input = (
+          if .name == "Write" or .name == "Edit" then {file_path: .input.file_path}
+          elif .name == "Read" then {file_path: .input.file_path}
+          elif .name == "Bash" then {command: (.input.command | .[0:300])}
+          elif .name == "Agent" then {description: .input.description, prompt: (.input.prompt | tostring | .[0:500])}
+          else .input | to_entries | map(select(.value | tostring | length < 300)) | from_entries
+          end)
+      elif .type == "thinking" then .thinking = (.thinking | .[0:500])
+      elif .type == "text" then .text = (.text | .[0:500])
+      else . end]
+  elif .type == "user" then
+    .message.content = [.message.content[]? |
+      if .type == "tool_result" then .content = (.content | tostring | .[0:300])
+      else . end]
+  else . end'
 
 claude -p - \
     --model "$MODEL" \
@@ -142,7 +163,7 @@ claude -p - \
     --permission-mode bypassPermissions \
     --add-dir "$OUTPUT_DIR" \
     < "$PROMPT_TMP" \
-    2>&1 | tee "$GEN_LOG" | jq -c --unbuffered 'del(.session_id, .uuid, .timestamp, .parent_tool_use_id, .rate_limit_info, .mcp_servers, .slash_commands, .apiKeySource, .claude_code_version, .output_style, .agents, .skills, .plugins, .fast_mode_state, .permissionMode, .modelUsage, .permission_denials, .message.model, .message.id, .message.usage, .message.stop_reason, .message.stop_sequence, .message.context_management, .tool_use_result, .total_cost_usd, .usage, .duration_ms, .duration_api_ms)' 2>/dev/null | cut -c1-200 || true
+    2>&1 | tee >(jq -c --unbuffered "$JQ_COMPACT" 2>/dev/null > "$GEN_LOG") | jq -c --unbuffered 'del(.session_id, .uuid, .timestamp, .parent_tool_use_id, .rate_limit_info, .mcp_servers, .slash_commands, .apiKeySource, .claude_code_version, .output_style, .agents, .skills, .plugins, .fast_mode_state, .permissionMode, .modelUsage, .permission_denials, .message.model, .message.id, .message.usage, .message.stop_reason, .message.stop_sequence, .message.context_management, .tool_use_result, .total_cost_usd, .usage, .duration_ms, .duration_api_ms)' 2>/dev/null | cut -c1-200 || true
 
 rm -f "$PROMPT_TMP"
 

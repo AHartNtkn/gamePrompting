@@ -401,32 +401,11 @@ Do NOT generate or audit a game. Only modify the generator files and commit."
     if [[ -s "$SCRIPT_DIR/generation.log" && -f "$SUMMARIZER_PROMPT_FILE" ]]; then
         log "  Summarizing generation log..."
 
-        # Pre-filter: truncate tool inputs/outputs to keep context manageable
-        FILTERED_LOG=$(grep '^{' "$SCRIPT_DIR/generation.log" | jq -c --unbuffered '
-if .type == "assistant" and (.message.content[]? | select(.type == "tool_use")) then
-  .message.content = [.message.content[] |
-    if .type == "tool_use" then
-      .input = (
-        if .name == "Write" or .name == "Read" or .name == "Edit" then {file_path: .input.file_path}
-        elif .name == "Bash" then {command: (.input.command | .[0:200])}
-        elif .name == "Agent" then {description: .input.description, prompt: (.input.prompt | tostring | .[0:500])}
-        else .input | to_entries | map(select(.value | tostring | length < 200)) | from_entries
-        end
-      )
-    else . end
-  ]
-elif .type == "user" and (.message.content[]? | select(.type == "tool_result")) then
-  .message.content = [.message.content[] |
-    if .type == "tool_result" then .content = (.content | tostring | .[0:300])
-    else . end
-  ]
-else . end
-' 2>/dev/null)
-
+        # generation.log is already compact (truncated at capture time in generate.sh)
         GEN_SUMMARY_PROMPT="$(cat "$SUMMARIZER_PROMPT_FILE")
 
-## Generation Log (tool contents truncated)
-$FILTERED_LOG"
+## Generation Log
+$(cat "$SCRIPT_DIR/generation.log")"
 
         GEN_SUMMARY_LOG="$LOG_DIR/gen-summary-iter${ITERATION}.log"
         run_claude "$GEN_SUMMARY_LOG" "$GEN_SUMMARY_PROMPT" \
