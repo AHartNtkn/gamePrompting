@@ -72,6 +72,12 @@ Games do NOT need special architecture to support this. A normal interactive CLI
 - Some criteria exist not because they're universal game design wisdom, but because they detect common LLM game-generation failure modes ("sentinel criteria"). These are valuable even if they'd be arbitrary applied to human games.
 - Remove criteria that prove to be noise rather than down-weighting them.
 
+## Orphaned tmux Sessions
+
+Games are play-tested in tmux sessions (named `game`, `audit-*`, etc.). If the loop or generator is killed mid-run, the tmux session survives — the game process keeps running in the background. This causes a hard-to-debug problem: `rm -rf` on the game directory appears to succeed, but the running process can recreate files or hold open file descriptors that prevent full deletion. The directory reappears with no obvious cause.
+
+**Always kill tmux sessions before deleting game directories.** `tmux kill-server` or `tmux kill-session -t game` before `rm -rf games/*`. `loop.sh` kills orphaned sessions on startup.
+
 ## Git Workflow
 
 This is a git repository. Commit after changes to prompts, catalogs, or tooling. Games and audits are generated artifacts — they are archived to `~/Documents/gameArchive/` and `~/Documents/auditArchive/` respectively and are NOT tracked in git (listed in `.gitignore`).

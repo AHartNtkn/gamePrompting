@@ -57,6 +57,16 @@ run_claude() {
 
 # --- Initialization ---
 
+# Kill orphaned tmux sessions from previous runs.
+# Game processes in tmux survive loop termination and can recreate
+# deleted directories or hold file descriptors open.
+for sess in $(tmux list-sessions -F '#{session_name}' 2>/dev/null); do
+    if [[ "$sess" == game* || "$sess" == audit-* ]]; then
+        tmux kill-session -t "$sess" 2>/dev/null
+        log "Killed orphaned tmux session: $sess"
+    fi
+done
+
 if [[ ! -f "$JOURNAL" ]]; then
     cat > "$JOURNAL" << 'JOURNAL_EOF'
 # Research Journal
