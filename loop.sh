@@ -50,9 +50,17 @@ run_claude() {
     local prompt="$2"
     shift 2
 
-    claude -p "$prompt" "$@" \
+    # Write prompt to temp file to avoid "Argument list too long"
+    local prompt_tmp
+    prompt_tmp=$(mktemp)
+    echo "$prompt" > "$prompt_tmp"
+
+    claude -p - "$@" \
         --output-format stream-json --verbose \
+        < "$prompt_tmp" \
         2>&1 | tee "$logfile" | jq -c --unbuffered 'del(.session_id, .uuid, .timestamp, .parent_tool_use_id, .rate_limit_info, .mcp_servers, .slash_commands, .apiKeySource, .claude_code_version, .output_style, .agents, .skills, .plugins, .fast_mode_state, .permissionMode, .modelUsage, .permission_denials, .message.model, .message.id, .message.usage, .message.stop_reason, .message.stop_sequence, .message.context_management, .tool_use_result, .total_cost_usd, .usage, .duration_ms, .duration_api_ms)' 2>/dev/null | cut -c1-200 || true
+
+    rm -f "$prompt_tmp"
 }
 
 # --- Initialization ---

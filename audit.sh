@@ -167,25 +167,34 @@ ${category_text}
 
 ${GAME_INFO}"
 
+    # Write prompt to temp file to avoid "Argument list too long" for large games
+    local prompt_file_tmp
+    prompt_file_tmp=$(mktemp)
+    echo "$full_prompt" > "$prompt_file_tmp"
+
     local attempt
     for attempt in 1 2 3; do
-        claude -p "$full_prompt" \
+        claude -p - \
             --model "$MODEL" \
             --output-format text \
             --tools "Bash,Read" \
             --permission-mode bypassPermissions \
             --add-dir "$GAME_DIR" \
+            < "$prompt_file_tmp" \
             > "$output_file" 2>/dev/null || {
+            rm -f "$prompt_file_tmp"
             mv "$output_file" "${output_file%.txt}_error.txt" 2>/dev/null
             return
         }
         # Retry if output is empty (transient API failure)
         if [[ -s "$output_file" ]]; then
+            rm -f "$prompt_file_tmp"
             return
         fi
         echo "  [${id}] Empty response (attempt $attempt/3), retrying..." >&2
         sleep 5
     done
+    rm -f "$prompt_file_tmp"
 }
 
 # Collect all jobs: categories A-U + sentinels

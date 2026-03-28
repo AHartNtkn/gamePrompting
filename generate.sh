@@ -130,14 +130,21 @@ echo "Generating..."
 echo ""
 
 # Run the generator with full tool access.
+# Write prompt to temp file to avoid "Argument list too long" for large prompts.
 # stream-json + verbose streams events in real time.
-claude -p "$FULL_PROMPT" \
+PROMPT_TMP=$(mktemp)
+echo "$FULL_PROMPT" > "$PROMPT_TMP"
+
+claude -p - \
     --model "$MODEL" \
     --output-format stream-json --verbose \
     --tools "Bash,Read,Write,Edit,Glob,Grep,Agent" \
     --permission-mode bypassPermissions \
     --add-dir "$OUTPUT_DIR" \
+    < "$PROMPT_TMP" \
     2>/dev/null | jq -c --unbuffered 'del(.session_id, .uuid, .timestamp, .parent_tool_use_id, .rate_limit_info, .mcp_servers, .slash_commands, .apiKeySource, .claude_code_version, .output_style, .agents, .skills, .plugins, .fast_mode_state, .permissionMode, .modelUsage, .permission_denials, .message.model, .message.id, .message.usage, .message.stop_reason, .message.stop_sequence, .message.context_management, .tool_use_result, .total_cost_usd, .usage, .duration_ms, .duration_api_ms)' | cut -c1-200 || true
+
+rm -f "$PROMPT_TMP"
 
 echo ""
 
