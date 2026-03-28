@@ -235,6 +235,11 @@ while true; do
     # then modifies generator files. Commits the changes.
     # ------------------------------------------------------------------
 
+    if [[ "$SKIP_TO" == "audit" || "$SKIP_TO" == "evaluate" ]]; then
+        log "[Step 1] SKIPPED (--skip-to $SKIP_TO)"
+        THESIS_TEXT="(skipped — resuming from existing state)"
+    else
+
     log "[Step 1] Analyzing feedback and modifying generator..."
 
     # Collect recent audit outputs for context (most recent audit directory)
@@ -322,13 +327,18 @@ Do NOT generate or audit a game. Only modify the generator files and commit."
         continue
     fi
 
+    fi  # end skip-to check for modify step
+
     # ------------------------------------------------------------------
     # Step 2: GENERATE
     # ------------------------------------------------------------------
 
-    log "[Step 2] Generating game for concept $CONCEPT..."
-
-    timeout 3600 ./generate.sh "$CONCEPT" --model "$MODEL" 2>&1 | tee run.log || true
+    if [[ "$SKIP_TO" == "audit" || "$SKIP_TO" == "evaluate" ]]; then
+        log "[Step 2] SKIPPED (--skip-to $SKIP_TO)"
+    else
+        log "[Step 2] Generating game for concept $CONCEPT..."
+        timeout 3600 ./generate.sh "$CONCEPT" --model "$MODEL" 2>&1 | tee run.log || true
+    fi
 
     # Check for game by looking for run.sh, not exit codes
     GAME_DIR=$(ls -dt "$SCRIPT_DIR/games"/*/ 2>/dev/null | head -1)
@@ -348,9 +358,12 @@ Do NOT generate or audit a game. Only modify the generator files and commit."
     # Step 3: AUDIT
     # ------------------------------------------------------------------
 
-    log "[Step 3] Auditing game..."
-
-    timeout 7200 ./audit.sh "$GAME_DIR" --model "$MODEL" 2>&1 | tee audit.log || true
+    if [[ "$SKIP_TO" == "evaluate" ]]; then
+        log "[Step 3] SKIPPED (--skip-to evaluate)"
+    else
+        log "[Step 3] Auditing game..."
+        timeout 7200 ./audit.sh "$GAME_DIR" --model "$MODEL" 2>&1 | tee audit.log || true
+    fi
 
     # Check for audit summary, not exit codes
     AUDIT_DIR=$(ls -dt "$SCRIPT_DIR/audits"/*/ 2>/dev/null | head -1)
@@ -453,6 +466,9 @@ Write the updated journal to $JOURNAL using the Write tool. Output nothing else.
     printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
         "$(git rev-parse --short HEAD)" "$CONCEPT" "$SCORE" "$SENTINEL_PASS" "$SENTINEL_FAIL" "$STATUS" "$THESIS_TEXT" \
         >> "$RESULTS"
+
+    # Clear skip-to after first iteration so subsequent iterations run fully
+    SKIP_TO=""
 
     log "  Iteration $ITERATION complete."
     log ""
