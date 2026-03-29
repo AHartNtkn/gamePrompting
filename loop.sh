@@ -39,10 +39,12 @@ log() {
     echo "[$timestamp] $*" >> "$LOG_FILE"
 }
 
-# Check if a log file contains rate-limit indicators from claude stream-json output.
+# Check if a log file indicates the request was killed by a rate limit.
+# A non-fatal rate_limit_event (throttling) also appears in normal requests,
+# so we check for the actual failure: "error":"rate_limit" on the response.
 # Returns 0 (true) if rate-limited, 1 (false) otherwise.
 is_rate_limited() {
-    grep -q '"type":"rate_limit_event"' "$1" 2>/dev/null
+    grep -q '"error":"rate_limit"' "$1" 2>/dev/null
 }
 
 # Wait for the rate limit to clear, polling every 5 minutes with a test call.
