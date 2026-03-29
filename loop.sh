@@ -410,7 +410,6 @@ Use the Write tool to create this file."
 
         GEN_SUMMARY_LOG="$LOG_DIR/gen-summary-iter${ITERATION}.log"
 
-        local attempt
         for attempt in 1 2 3; do
             run_claude "$GEN_SUMMARY_LOG" "$GEN_SUMMARY_PROMPT" \
                 --model haiku \
