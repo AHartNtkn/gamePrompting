@@ -228,6 +228,20 @@ Check: Does the game's opening output contain a large ASCII art block (10+ lines
 **S66. Missing Spatial Display**
 Check: Does the game concept involve spatial reasoning (navigation, positioning, layout, line of sight, tactical movement)? If yes, does the game provide any visual spatial representation (map, grid, diagram)? If the concept demands spatial reasoning and the game provides no visual display, FAIL.
 
+### XI. Code Anti-Patterns
+
+**S67. Print Inside Simulation**
+Check: Search for `print()` or `input()` calls inside functions that compute game outcomes (combat, resources, AI). If simulation functions contain IO calls, FAIL.
+
+**S68. Monolithic Game File**
+Check: Count lines per file. If any single file contains >80% of total code lines (excluding data/config), FAIL.
+
+**S69. Magic Number Proliferation**
+Check: Count numeric literals in game logic (excluding data definitions and array indices). If >20 unnamed numeric literals appear in game logic functions, FAIL.
+
+**S70. Hardcoded Content**
+Check: Are items, enemies, abilities, and events defined in centralized data structures or scattered as conditionals in game logic? If >50% of content is inline rather than data-driven, FAIL.
+
 ## Output Format
 
 Output your results in exactly this format:

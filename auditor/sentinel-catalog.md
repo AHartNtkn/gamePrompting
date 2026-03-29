@@ -397,6 +397,28 @@ Pattern: The game involves spatial reasoning (navigation, positioning, layout, l
 Why: LLMs default to text-menu interfaces even when the concept clearly implies spatial interaction. A space station infiltration game, a store layout game, or a tactical combat game without a map forces the player to build a mental model from prose.
 Detection: Identify whether the game concept involves spatial decisions. Check if any visual spatial representation exists. If the concept demands spatial reasoning and the game provides no visual display, FAIL.
 
+### XI. Code Anti-Patterns
+
+**S67. Print Inside Simulation**
+Pattern: `print()`, `input()`, or string formatting calls inside functions that compute game outcomes (combat resolution, resource calculation, AI decisions, event resolution).
+Why: LLMs generate code that interleaves display and logic because their training data rarely separates them. This makes headless testing impossible and couples display to simulation.
+Detection: Search for `print(` and `input(` inside functions that return game state changes (damage values, resource deltas, AI decisions). If simulation functions contain IO calls, FAIL.
+
+**S68. Monolithic Game File**
+Pattern: A single file contains >80% of the game's logic — game loop, state management, all game systems, display, and input handling in one file.
+Why: LLMs default to writing everything in one file. This makes the code unnavigable, untestable, and impossible to modify one system without reading the entire program.
+Detection: Count lines per file. If any single file contains >80% of total code lines (excluding data/config), FAIL.
+
+**S69. Magic Number Proliferation**
+Pattern: Numeric literals appear directly in game logic — `if hp < 20`, `damage = attack * 1.5`, `cost = 50`, `probability = 0.3` — with no named constant or config reference.
+Why: LLMs scatter values throughout code because it's the shortest path to working logic. This makes balance tuning require a full codebase search.
+Detection: Count numeric literals in game logic (excluding data definition files and array indices). If >20 unnamed numeric literals appear in game logic, FAIL.
+
+**S70. Hardcoded Content**
+Pattern: Game entities (items, enemies, events) are defined inline in game logic rather than in data structures. Adding a new weapon requires editing the combat function, not a data table.
+Why: LLMs generate content inline because it's the path of least abstraction. This makes content impossible to extend without understanding the engine.
+Detection: Check whether items, enemies, abilities, and events are defined in centralized data structures (dicts, lists, config files) or scattered as conditionals throughout game logic (`if weapon == "sword": damage = 10`). If >50% of content is defined inline in logic rather than data, FAIL.
+
 ---
 
 ## Summary
@@ -413,7 +435,8 @@ Detection: Identify whether the game concept involves spatial decisions. Check i
 | VIII. Structural Autopilot | 5 | Template structures |
 | IX. Untested Gameplay | 8 | Works in code, broken in play |
 | X. Miscellaneous | 13 | Other red flags |
-| **Total** | **65** | |
+| XI. Code Anti-Patterns | 4 | Implementation quality |
+| **Total** | **69** | |
 
 ### Usage Note
 

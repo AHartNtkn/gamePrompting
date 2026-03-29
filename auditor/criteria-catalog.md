@@ -1146,6 +1146,60 @@ Does the ASCII art use abstraction appropriate to text rendering rather than att
 
 ---
 
+## W. Code Architecture & Iteration Quality
+
+How well-structured is the code for maintainability, testability, and ease of iteration? This category evaluates the game as a *codebase*, not as a player experience. The auditor reads source code to assess whether the implementation would support ongoing development.
+
+**W1. Data-Driven Content Definition**
+Are game entities (items, enemies, abilities, events, terrain types) defined in data (config files, dictionaries, JSON, YAML) separate from the code that processes them? Can new content be added by creating a new data entry without modifying engine logic? Or are entity properties scattered as literals throughout the codebase?
+*(Cogmind .xt data files, RimWorld XML Defs, CDDA JSON content, Dwarf Fortress raws, Factorio Lua prototypes, Caves of Qud ObjectBlueprints.xml)*
+
+**W2. Simulation-Display Separation**
+Is game logic (combat resolution, resource calculation, AI decisions, state transitions) free of display/IO calls? Can the simulation run without any rendering? Or are `print()`, `input()`, and formatting calls mixed into functions that compute game outcomes?
+*(Universal architecture principle — GameDev.net, RogueBasin MVC, CDDA layered architecture, Cogmind standalone map generator)*
+
+**W3. System Modularity**
+Can individual game systems (combat, economy, movement, AI) be understood and modified without understanding unrelated systems? Are system boundaries explicit through defined interfaces, or do systems reach into each other's internals? Could you change how combat works without breaking the economy?
+*(Dwarf Fortress negative example — "so many mechanics touch so many other mechanics that incremental changes don't work." Caves of Qud positive example — component composition. RimWorld ThingComp pattern)*
+
+**W4. God Object Absence**
+Is there a single class or module that accumulates unrelated responsibilities — game loop, state management, input handling, display, and multiple game systems all in one place? Or are responsibilities distributed across focused modules?
+*(CDDA game.cpp — senior devs explicitly want it deprecated. Universal anti-pattern)*
+
+**W5. State Serialization Quality** `[CONDITIONAL: game has save/load]`
+Can the complete game state be serialized and deserialized to reproduce the exact same game position? Is the format structured and readable (JSON, YAML) rather than opaque binary? Are object cross-references handled by ID rather than direct reference?
+*(Dwarf Fortress 732 deserialization methods as negative example. Command/action pattern from roguelike architecture)*
+
+**W6. Testability**
+Can game systems be tested in isolation without initializing the full game? Can the simulation run headless (no display) for automated balance testing? Is game state deterministic given the same inputs and random seed?
+*(Factorio FFF #366 — "the only way to go fast is to go well." CRC determinism checks. Monte Carlo balance simulation)*
+
+**W7. Configuration Centralization**
+Are balance values (damage, health, costs, probabilities, thresholds, timing) defined in named constants or config data rather than scattered as magic numbers throughout the code? Can balance be tuned without reading through game logic to find where the values are?
+*(RogueBasin "15 Steps" — data structures more important than code. Factorio prototype data layer. Universal anti-pattern: magic numbers)*
+
+**W8. Content Extensibility**
+How much work is required to add a new item, enemy, event, or mechanic? Is there a clear extension point pattern — a place you go to add a new X? Or does adding content require modifying multiple files and understanding the full codebase?
+*(CDDA — adding an item requires only a JSON entry. RimWorld Def inheritance. Cogmind data-driven content pipeline)*
+
+**W9. Code Navigability**
+Do file and module names clearly indicate their contents? Are files reasonably sized (not multi-thousand-line monoliths)? Is the code organized by domain (combat, economy, map, AI) rather than by arbitrary grouping? Can a developer find where to look for a given feature?
+*(Dwarf Fortress — consistent verbose naming, Find In Files strategy. CDDA clear file naming conventions. Factorio — refactoring reduced time to understand big picture)*
+
+**W10. Duplication Absence**
+Is there copy-paste code where abstraction should exist — near-identical entity definitions, repeated logic blocks, duplicated handler patterns? Or does the code use inheritance, composition, templates, or shared utilities to eliminate redundancy?
+*(RimWorld abstract Defs, CDDA copy-from field, DRY principle across all sources)*
+
+**W11. Entity Composition** `[CONDITIONAL: game has multiple entity types with shared behaviors]`
+Are game entities composed from reusable components or behaviors rather than deep inheritance hierarchies? Can entity behavior be modified by adding/removing components rather than creating new subclasses? Can new entity types be created by combining existing components?
+*(Caves of Qud ECS, RimWorld ThingComp, RogueBasin ECS recommendation, Dwarf Fortress subobject allocation)*
+
+**W12. Dependency Clarity**
+Are system dependencies explicit and acyclic? Can you trace what depends on what? Or are there circular dependencies, global mutable state accessed from everywhere, or hidden coupling through shared state?
+*(CDDA deprecated g-> pointer pattern. Circular dependency as universal anti-pattern. Command pattern for trackable state mutation)*
+
+---
+
 ## Summary
 
 | Category | Count |
@@ -1172,4 +1226,5 @@ Does the ASCII art use abstraction appropriate to text rendering rather than att
 | T. Goal Structure | 5 |
 | U. Specific Design Lenses | 12 |
 | V. Visual Representation & ASCII Graphics | 12 |
-| **Total** | **252** |
+| W. Code Architecture & Iteration Quality | 12 |
+| **Total** | **264** |
