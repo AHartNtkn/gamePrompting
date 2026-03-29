@@ -39,25 +39,26 @@ log() {
     echo "[$timestamp] $*" >> "$LOG_FILE"
 }
 
-# Check if a log file indicates the request was killed by a rate limit.
-# A non-fatal rate_limit_event (throttling) also appears in normal requests,
-# so we check for the actual failure: "error":"rate_limit" on the response.
-# Returns 0 (true) if rate-limited, 1 (false) otherwise.
-is_rate_limited() {
-    grep -q '"error":"rate_limit"' "$1" 2>/dev/null
+# Check if a claude call failed due to an API-level error (rate limit,
+# connection refused, etc). Checks for is_error:true on the result line,
+# which only appears when the CLI itself failed — not when the LLM output
+# was merely bad. A non-fatal rate_limit_event (throttling) does NOT set
+# this flag; only fatal failures do.
+has_api_error() {
+    grep -q '"type":"result".*"is_error":true' "$1" 2>/dev/null
 }
 
-# Wait for the rate limit to clear, polling every 5 minutes with a test call.
-wait_for_rate_limit() {
-    log "  RATE LIMIT HIT. Polling every 5 minutes until it clears..."
+# Wait for the API to recover, polling every 5 minutes with a test call.
+wait_for_api_recovery() {
+    log "  API ERROR. Polling every 5 minutes until it recovers..."
     while true; do
         sleep 300
         local test_output
         test_output=$(claude --model "$MODEL" -p "Say OK" 2>&1) || true
-        if echo "$test_output" | grep -qi "hit your limit"; then
-            log "  Rate limit still active. Waiting another 5 minutes..."
+        if echo "$test_output" | grep -qiE "hit your limit|API Error|ConnectionRefused|unable to connect"; then
+            log "  API still unavailable. Waiting another 5 minutes..."
         else
-            log "  Rate limit cleared. Resuming."
+            log "  API recovered. Resuming."
             return 0
         fi
     done
@@ -80,8 +81,8 @@ run_claude() {
             < "$prompt_tmp" \
             2>&1 | tee "$logfile" | jq -c --unbuffered 'del(.session_id, .uuid, .timestamp, .parent_tool_use_id, .rate_limit_info, .mcp_servers, .slash_commands, .apiKeySource, .claude_code_version, .output_style, .agents, .skills, .plugins, .fast_mode_state, .permissionMode, .modelUsage, .permission_denials, .message.model, .message.id, .message.usage, .message.stop_reason, .message.stop_sequence, .message.context_management, .tool_use_result, .total_cost_usd, .usage, .duration_ms, .duration_api_ms)' 2>/dev/null | cut -c1-200 || true
 
-        if is_rate_limited "$logfile"; then
-            wait_for_rate_limit
+        if has_api_error "$logfile"; then
+            wait_for_api_recovery
             log "  Retrying claude call..."
             continue
         fi
@@ -425,8 +426,8 @@ Do NOT generate or audit a game. Only modify the generator files and commit."
         log "[Step 2: Generate] Concept $CONCEPT..."
         while true; do
             timeout 86400 ./generate.sh "$CONCEPT" --model "$MODEL" 2>&1 | tee run.log || true
-            if is_rate_limited "$SCRIPT_DIR/generation.log"; then
-                wait_for_rate_limit
+            if has_api_error "$SCRIPT_DIR/generation.log"; then
+                wait_for_api_recovery
                 log "  Retrying generation..."
                 continue
             fi
