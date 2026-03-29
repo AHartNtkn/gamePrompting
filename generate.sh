@@ -152,11 +152,7 @@ if [[ -d "$AGENTS_DIR" ]]; then
     done
 fi
 
-# Write prompt to temp file to avoid "Argument list too long" for large prompts.
-PROMPT_TMP=$(mktemp)
-echo "$FULL_PROMPT" > "$PROMPT_TMP"
-
-# Write agents JSON to temp file too (can be large)
+# Write agents JSON to temp file (can be large)
 AGENTS_TMP=$(mktemp)
 echo "$AGENTS_JSON" > "$AGENTS_TMP"
 
@@ -185,18 +181,61 @@ JQ_COMPACT='del(.session_id, .uuid, .timestamp, .parent_tool_use_id, .rate_limit
       else . end]
   else . end'
 
-# Pipe through compact jq filter. Save to log file AND display truncated on terminal.
-claude -p - \
-    --model "$MODEL" \
-    --output-format stream-json --verbose \
-    --tools "Bash,Read,Write,Edit,Glob,Grep,Agent" \
-    --permission-mode bypassPermissions \
-    --add-dir "$OUTPUT_DIR" \
-    --agents "$(cat "$AGENTS_TMP")" \
-    < "$PROMPT_TMP" \
-    2>&1 | jq -c --unbuffered "$JQ_COMPACT" 2>/dev/null | tee "$GEN_LOG" | cut -c1-200 || true
+CURRENT_PROMPT="$FULL_PROMPT"
 
-rm -f "$PROMPT_TMP" "$AGENTS_TMP"
+while true; do
+    PROMPT_TMP=$(mktemp)
+    echo "$CURRENT_PROMPT" > "$PROMPT_TMP"
+
+    # Pipe through compact jq filter. Save to log file AND display truncated on terminal.
+    claude -p - \
+        --model "$MODEL" \
+        --output-format stream-json --verbose \
+        --tools "Bash,Read,Write,Edit,Glob,Grep,Agent" \
+        --permission-mode bypassPermissions \
+        --add-dir "$OUTPUT_DIR" \
+        --agents "$(cat "$AGENTS_TMP")" \
+        < "$PROMPT_TMP" \
+        2>&1 | jq -c --unbuffered "$JQ_COMPACT" 2>/dev/null | tee "$GEN_LOG" | cut -c1-200 || true
+
+    rm -f "$PROMPT_TMP"
+
+    # Check for API-level failure (rate limit, connection refused, etc.)
+    if ! grep -q '"type":"result".*"is_error":true' "$GEN_LOG" 2>/dev/null; then
+        break  # No API error — generation completed (successfully or not)
+    fi
+
+    # API error — check if there's partial work to continue from
+    file_count=$(find "$OUTPUT_DIR" -type f -not -path '*/__pycache__/*' 2>/dev/null | wc -l)
+    if [[ "$file_count" -eq 0 ]]; then
+        echo "API error with no partial work to continue from."
+        break
+    fi
+
+    echo ""
+    echo "API error after partial generation ($file_count files created)."
+    echo "Polling every 5 minutes until API recovers..."
+
+    while true; do
+        sleep 300
+        test_output=$(claude --model "$MODEL" -p "Say OK" 2>&1) || true
+        if echo "$test_output" | grep -qiE "hit your limit|API Error|ConnectionRefused|unable to connect"; then
+            echo "API still unavailable. Waiting another 5 minutes..."
+        else
+            echo "API recovered. Resuming generation from partial work..."
+            break
+        fi
+    done
+
+    # Rebuild prompt with continuation note
+    CURRENT_PROMPT="${FULL_PROMPT}
+
+## CONTINUATION
+
+The previous generation session was interrupted by an API error. There is an incomplete implementation already in the output directory. Review the existing files and continue from where the previous session left off. Do not start over — build on what exists. Complete any unfinished systems, verify and test the game, and ensure it is playable with a run.sh launch script."
+done
+
+rm -f "$AGENTS_TMP"
 
 echo ""
 
