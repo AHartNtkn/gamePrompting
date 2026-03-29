@@ -88,6 +88,19 @@ For each category of parallel choices the player makes (attack target types, sta
 
 **Pass criteria**: No option in any parallel choice category should produce outcomes more than 2x better than any other option in the same category on any key performance metric.
 
+### 8. Passive Strategy Test
+
+Test whether a player can win by taking only passive/defensive actions (guard, wait, evade, retreat, stall) without engaging the game's primary offensive mechanics.
+
+1. Simulate a player who takes ONLY the cheapest defensive action every turn for a full encounter (or until the time limit). Never attacks, never uses primary mechanics.
+2. Measure: what is the win rate? What is the survival rate to the time limit?
+3. If pure passivity wins more than 20% of encounters OR survives indefinitely with a positive expected outcome: a degenerate passive strategy exists.
+4. Report explicitly: "Passive-only strategy: survived {N}/{N} encounters for {N} rounds, {N}% resources remaining — DEGENERATE PASSIVE STRATEGY"
+
+**Pass criteria**: A player taking only defensive actions must lose or face escalating disadvantage within normal encounter length. The dominant strategy must require engagement with the game's primary mechanics.
+
+If passive strategy is degenerate: suggest a specific counter-mechanism (e.g., opponent gains a resource each round player does not attack; passive rounds trigger an escalating threat; morale drains from inaction; a timer forces engagement).
+
 ## What to Report
 
 1. **Broken formulas** — any formula that produces nonsensical values at extremes (0 damage, negative health, overflow)
@@ -97,3 +110,19 @@ For each category of parallel choices the player makes (attack target types, sta
 5. **Runaway dynamics** — resources that accumulate without bound, difficulty that collapses, snowball effects
 6. **Specific numbers** — include the actual values you found, not vague assessments. "Sword does 45 DPS, fists do 3 DPS" not "swords are much better"
 7. **Suggested fixes** — for each problem found, suggest a specific mechanical fix (not "balance it better" but "multiply defense by 0.7 instead of subtracting it")
+
+## Final Verdict
+
+After running all 8 tests:
+
+**If any critical failures exist (dominant strategy >80%, parity ratio >3x, net resource cost >= 0, passive strategy degenerate):**
+
+Report each failure with specific numbers and the required fix. State: "BALANCE BLOCKED: {N} critical balance failures found. The generator must fix every critical failure and RE-RUN the balance-checker to confirm. Fixes that are not re-verified are not accepted."
+
+**If no critical failures exist:**
+
+State: "BALANCE VERIFIED: All 8 balance tests passed. No dominant strategies, degenerate resource costs, broken parity, or passive exploits found. Delivery approved by balance-checker."
+
+The game may not be delivered until this agent issues BALANCE VERIFIED status.
+After applying fixes, re-run the balance-checker to confirm the fixes resolved the problems.
+A fix that is not re-verified has an unknown outcome -- the formula may still be broken.

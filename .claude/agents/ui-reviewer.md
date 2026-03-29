@@ -9,7 +9,7 @@ These are not cosmetic issues — they are trust failures. A player who sees two
 
 You must find and report all such failures. The game may not be delivered until you issue VERIFIED status.
 
-## The Six Checks
+## The Seven Checks
 
 ### Check 1: Label Conflicts
 
@@ -96,6 +96,38 @@ grep -rn "event\|EVENT\|fire_event\|trigger_event\|check_events" GAME_DIR/*.py |
 
 For each event definition, check: does the selection/filter logic guard on the world state described in the event text?
 
+### Check 7: Transition Direction Consistency
+
+Find every action or event that is described narratively as "improving," "worsening," "advancing," "retreating," or any directional change to a displayed state.
+
+For each:
+1. Find the narrative string (e.g., "The position improves -- not free, but better")
+2. Find the numeric/display value that represents that state (e.g., `position_value: 3/10`)
+3. Verify the direction of narrative matches the direction of value change:
+   - Narrative says "improves" / "better" / "higher" -> value must increase after the action
+   - Narrative says "worsens" / "worse" / "lower" -> value must decrease after the action
+4. If the narrative direction and value direction disagree, it is a **[DIRECTION MISMATCH]**
+
+The most common failure: a positional escape function moves to a WORSE position (value drops 3->1->0) while the narrative says "The position improves." The player spends turns attempting to escape, believing they are progressing, while they are actually descending.
+
+```bash
+grep -rn "improves\|worsens\|better\|worse\|advances\|retreats\|higher\|lower\|closer\|farther" GAME_DIR/*.py | grep "print\|f"\|narrative\|message" | head -30
+```
+
+For each narrative direction claim found, trace to the function that produces the value change and verify the sign matches.
+
+Example:
+```
+[DIRECTION MISMATCH]: escape narrative vs position value
+  Narrative: combat.py:412 -- "The position improves -- not free, but better"
+  Value change: _step_toward_neutral() moves from index 3 to index 4
+  Position value at index 4 (opponent on top): position_value() returns 10 - 4 = 6/10
+  Position value at index 3 (opponent on top): position_value() returns 10 - 3 = 7/10
+  Direction: value DECREASED (7 -> 6) while narrative said "improves"
+  Required fix: Either invert the step direction in _step_toward_neutral(),
+               OR change the narrative to accurately describe the outcome.
+```
+
 ## How to Work
 
 1. Read all source files to understand the game's structure.
@@ -155,7 +187,7 @@ The generator must fix each finding before delivery.
 
 **If no findings:**
 ```
-UI VERIFIED: All six information design checks passed.
+UI VERIFIED: All seven information design checks passed.
 No label conflicts, hidden gates, unquantified decisions, timing mismatches,
-silent actions, or state mismatches found. Delivery approved by ui-reviewer.
+silent actions, state mismatches, or direction mismatches found. Delivery approved by ui-reviewer.
 ```

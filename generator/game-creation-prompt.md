@@ -23,7 +23,8 @@ You can spawn sub-agents to help with development. Use them — they let you par
 - **balance-checker** — Stress-tests your game's math by writing and running automated scenarios. Finds dominant strategies, broken formulas, runaway dynamics, and useless options. Use this after implementation.
 - **design-reviewer** — Reviews your game's design for structural problems (isolated systems, fake decisions, flat arcs, missing feedback loops). Use this after initial implementation to catch high-level issues before play-testing.
 - **simulation-verifier** — Audits your source code for orphaned mechanics: player actions that cost resources but produce no simulation outcome. **Run this after implementation. You may not deliver the game until it issues VERIFIED status.** It blocks delivery if any state variable is written by player action but never read in an outcome-determining function.
-- **ui-reviewer** — Audits your game for information design integrity: inconsistent metric labels (same name, different formula), hidden phase gates (transition conditions with no progress display), unquantified decisions (irreversible costs with vague benefit descriptions), timing message inaccuracies, silent actions (player actions with no visible confirmation), and narrative events that fire regardless of whether the described world state is true. **Run this after implementation. You may not deliver the game until it issues VERIFIED status.**
+- **ui-reviewer** — Audits your game for information design integrity: inconsistent metric labels (same name, different formula), hidden phase gates (transition conditions with no progress display), unquantified decisions (irreversible costs with vague benefit descriptions), timing message inaccuracies, silent actions (player actions with no visible confirmation), narrative events that fire regardless of whether the described world state is true, and transition direction mismatches (narrative says "improves" but displayed value drops). **Run this after implementation. You may not deliver the game until it issues VERIFIED status.**
+- **dispatch-verifier** — Verifies every menu action key has an explicit handler in the dispatch code. Catches silent fallthroughs where player actions appear valid but execute wrong code (e.g., "Clinch Strike" silently becomes Guard, "Retreat" silently fails, "Hack Terminal" silently does nothing). This is the most common cause of subsystem collapse. **Run this after implementation. You may not deliver the game until it issues VERIFIED status.**
 
 To spawn an agent, use the Agent tool with the agent name as the subagent_type or name. Give it the game directory path and any specific instructions.
 
@@ -109,6 +110,8 @@ After play-testing, run the **simulation-verifier** on your game directory. It w
 
 Then run the **ui-reviewer** on your game directory. It checks for information design integrity failures: inconsistent metric labels, hidden phase gates, unquantified decisions, timing message inaccuracies, silent actions, and events that fire regardless of the world state they describe. These failures are invisible in code but catastrophic in play — they corrupt the player's ability to reason about the game. Fix every finding before proceeding.
 
+Then run the **dispatch-verifier** on your game directory. It verifies every menu action key has an explicit handler in the dispatch code. Fix every finding before proceeding.
+
 Then run the balance-checker with these explicit questions:
 1. **Dominant strategy test**: What is the single highest-value strategy? How much better is it than the second-best (in %)? If one strategy wins 80%+ of situations regardless of context, it must be redesigned.
 2. **Death spiral test**: Once a player starts losing, can they realistically recover? Test the worst-case scenario 10+ turns in. If recovery is mathematically impossible, design a recovery mechanism.
@@ -116,6 +119,8 @@ Then run the balance-checker with these explicit questions:
 4. **Useless option test**: Is there any option that is dominated by another option in all situations? Report it — either fix it or remove it.
 5. **Primary resource cost test**: For the most common action, compute `net_cost = action_cost - per_turn_recovery`. If net_cost >= 0, the resource system is non-functional for default play. Fix it.
 6. **Parallel option parity test**: For each parallel choice category (targets, builds, approaches), verify no option produces outcomes more than 2x better than any other. Report the ratio.
+
+After the balance-checker reports findings and you apply fixes: **re-run the balance-checker**. A fix that is not re-verified has an unknown outcome -- the formula may still be broken. The balance-checker must issue BALANCE VERIFIED before you proceed.
 
 Then perform this **mandatory pre-delivery checklist** yourself before finishing:
 
