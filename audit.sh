@@ -284,9 +284,8 @@ echo ""
 echo "All auditors complete."
 
 # --- Retry failed auditors ---
-MAX_AUDIT_RETRIES=3
 
-for retry_attempt in $(seq 1 $MAX_AUDIT_RETRIES); do
+while true; do
     # Collect failed auditors
     declare -a FAILED_RETRY_IDS=()
     declare -a FAILED_RETRY_PROMPTS=()
@@ -306,16 +305,18 @@ for retry_attempt in $(seq 1 $MAX_AUDIT_RETRIES); do
 
     echo ""
     echo "  ${#FAILED_RETRY_IDS[@]} auditors produced no output: ${FAILED_RETRY_IDS[*]}"
-    echo "  Waiting 5 minutes before retry ${retry_attempt}/${MAX_AUDIT_RETRIES}..."
-    sleep 300
+    echo "  Polling every 5 minutes until API recovers..."
 
-    # Test API availability before retrying
-    test_output=$(claude --model "$MODEL" -p "Say OK" 2>&1) || true
-    if echo "$test_output" | grep -qiE "hit your limit|API Error|ConnectionRefused|unable to connect"; then
-        echo "  API still unavailable."
-        continue
-    fi
-    echo "  Retrying ${#FAILED_RETRY_IDS[@]} auditors..."
+    while true; do
+        sleep 300
+        test_output=$(claude --model "$MODEL" -p "Say OK" 2>&1) || true
+        if echo "$test_output" | grep -qiE "hit your limit|API Error|ConnectionRefused|unable to connect"; then
+            echo "  API still unavailable. Waiting another 5 minutes..."
+        else
+            echo "  API recovered. Retrying ${#FAILED_RETRY_IDS[@]} auditors..."
+            break
+        fi
+    done
 
     # Clean up error markers from previous attempt
     for id in "${FAILED_RETRY_IDS[@]}"; do
