@@ -424,15 +424,7 @@ Do NOT generate or audit a game. Only modify the generator files and commit."
         log "[Step 2: Generate] SKIPPED (--skip-to $SKIP_TO)"
     else
         log "[Step 2: Generate] Concept $CONCEPT..."
-        while true; do
-            timeout 86400 ./generate.sh "$CONCEPT" --model "$MODEL" 2>&1 | tee run.log || true
-            if has_api_error "$SCRIPT_DIR/generation.log"; then
-                wait_for_api_recovery
-                log "  Retrying generation..."
-                continue
-            fi
-            break
-        done
+        timeout 86400 ./generate.sh "$CONCEPT" --model "$MODEL" 2>&1 | tee run.log || true
     fi
 
     # Summarize the generation log into a timeline for the evaluate step.
