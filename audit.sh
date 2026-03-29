@@ -281,7 +281,87 @@ while [[ ${#RUNNING_PIDS[@]} -gt 0 ]]; do
 done
 
 echo ""
-echo "All auditors complete. Aggregating results..."
+echo "All auditors complete."
+
+# --- Retry failed auditors ---
+MAX_AUDIT_RETRIES=3
+
+for retry_attempt in $(seq 1 $MAX_AUDIT_RETRIES); do
+    # Collect failed auditors
+    declare -a FAILED_RETRY_IDS=()
+    declare -a FAILED_RETRY_PROMPTS=()
+    declare -a FAILED_RETRY_OUTPUTS=()
+
+    for i in "${!JOB_IDS[@]}"; do
+        id="${JOB_IDS[$i]}"
+        output_file="$OUTPUT_DIR/${id}.txt"
+        if [[ ! -f "$output_file" ]] || [[ ! -s "$output_file" ]]; then
+            FAILED_RETRY_IDS+=("$id")
+            FAILED_RETRY_PROMPTS+=("${JOB_PROMPTS[$i]}")
+            FAILED_RETRY_OUTPUTS+=("${JOB_OUTPUTS[$i]}")
+        fi
+    done
+
+    [[ ${#FAILED_RETRY_IDS[@]} -eq 0 ]] && break
+
+    echo ""
+    echo "  ${#FAILED_RETRY_IDS[@]} auditors produced no output: ${FAILED_RETRY_IDS[*]}"
+    echo "  Waiting 5 minutes before retry ${retry_attempt}/${MAX_AUDIT_RETRIES}..."
+    sleep 300
+
+    # Test API availability before retrying
+    test_output=$(claude --model "$MODEL" -p "Say OK" 2>&1) || true
+    if echo "$test_output" | grep -qiE "hit your limit|API Error|ConnectionRefused|unable to connect"; then
+        echo "  API still unavailable."
+        continue
+    fi
+    echo "  Retrying ${#FAILED_RETRY_IDS[@]} auditors..."
+
+    # Clean up error markers from previous attempt
+    for id in "${FAILED_RETRY_IDS[@]}"; do
+        rm -f "$OUTPUT_DIR/${id}_error.txt"
+    done
+
+    # Run failed auditors with parallel pool
+    declare -A RETRY_PIDS=()
+    RETRY_NEXT=0
+    RETRY_TOTAL=${#FAILED_RETRY_IDS[@]}
+
+    for ((i = 0; i < MAX_PARALLEL && i < RETRY_TOTAL; i++)); do
+        idx=$RETRY_NEXT
+        RETRY_NEXT=$((RETRY_NEXT + 1))
+        run_auditor "${FAILED_RETRY_IDS[$idx]}" "${FAILED_RETRY_PROMPTS[$idx]}" "${FAILED_RETRY_OUTPUTS[$idx]}" &
+        RETRY_PIDS[$!]="${FAILED_RETRY_IDS[$idx]}"
+        echo "  [${FAILED_RETRY_IDS[$idx]}] Retry started (pid $!)"
+    done
+
+    while [[ ${#RETRY_PIDS[@]} -gt 0 ]]; do
+        wait -n 2>/dev/null || true
+        for pid in "${!RETRY_PIDS[@]}"; do
+            if ! kill -0 "$pid" 2>/dev/null; then
+                id="${RETRY_PIDS[$pid]}"
+                unset "RETRY_PIDS[$pid]"
+                output_file="$OUTPUT_DIR/${id}.txt"
+                if [[ -f "$output_file" ]] && [[ -s "$output_file" ]]; then
+                    echo "  [${id}] Retry succeeded"
+                else
+                    echo "  [${id}] Retry failed"
+                fi
+                if [[ $RETRY_NEXT -lt $RETRY_TOTAL ]]; then
+                    idx=$RETRY_NEXT
+                    RETRY_NEXT=$((RETRY_NEXT + 1))
+                    run_auditor "${FAILED_RETRY_IDS[$idx]}" "${FAILED_RETRY_PROMPTS[$idx]}" "${FAILED_RETRY_OUTPUTS[$idx]}" &
+                    RETRY_PIDS[$!]="${FAILED_RETRY_IDS[$idx]}"
+                    echo "  [${FAILED_RETRY_IDS[$idx]}] Retry started (pid $!)"
+                fi
+            fi
+        done
+        sleep 2
+    done
+done
+
+echo ""
+echo "Aggregating results..."
 echo ""
 
 # --- Aggregation ---
