@@ -286,7 +286,7 @@ while true; do
     # Step 1: MODIFY (responds to previous audit)
     # ------------------------------------------------------------------
 
-    if [[ "$SKIP_TO" == "audit" || "$SKIP_TO" == "evaluate" ]]; then
+    if [[ "$SKIP_TO" == "generate" || "$SKIP_TO" == "audit" || "$SKIP_TO" == "evaluate" ]]; then
         log "[Step 1: Modify] SKIPPED (--skip-to $SKIP_TO)"
         THESIS_TEXT="(skipped — resuming from existing state)"
     else
