@@ -225,7 +225,7 @@ Be specific and actionable. 'Improve combat' is useless. 'Add per-weapon range e
 Write the updated journal to $JOURNAL using the Write tool. Output nothing else."
 
             run_claude "$LOG_DIR/evaluate-baseline.log" "$EVALUATE_PROMPT" \
-                --model "$MODEL" \
+                --model opus \
                 --tools "Read,Write" \
                 --permission-mode bypassPermissions \
                 || true
@@ -397,7 +397,7 @@ Do NOT generate or audit a game. Only modify the generator files and commit."
 
     MODIFY_LOG="$LOG_DIR/modify-iter${ITERATION}.log"
     run_claude "$MODIFY_LOG" "$MODIFY_PROMPT" \
-        --model "$MODEL" \
+        --model opus \
         --tools "Bash,Read,Write,Edit,Glob,Grep,Skill,Agent" \
         --permission-mode bypassPermissions \
         --add-dir "$GENERATOR_DIR" \
@@ -570,7 +570,7 @@ Write the updated journal to $JOURNAL using the Write tool. Output nothing else.
 
     EVAL_LOG="$LOG_DIR/evaluate-iter${ITERATION}.log"
     run_claude "$EVAL_LOG" "$EVALUATE_PROMPT" \
-        --model "$MODEL" \
+        --model opus \
         --tools "Read,Write" \
         --permission-mode bypassPermissions \
         || true
