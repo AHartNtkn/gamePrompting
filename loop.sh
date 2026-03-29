@@ -39,6 +39,28 @@ log() {
     echo "[$timestamp] $*" >> "$LOG_FILE"
 }
 
+# Check if a log file contains rate-limit indicators from claude stream-json output.
+# Returns 0 (true) if rate-limited, 1 (false) otherwise.
+is_rate_limited() {
+    grep -q '"type":"rate_limit_event"' "$1" 2>/dev/null
+}
+
+# Wait for the rate limit to clear, polling every 5 minutes with a test call.
+wait_for_rate_limit() {
+    log "  RATE LIMIT HIT. Polling every 5 minutes until it clears..."
+    while true; do
+        sleep 300
+        local test_output
+        test_output=$(claude --model "$MODEL" -p "Say OK" 2>&1) || true
+        if echo "$test_output" | grep -qi "hit your limit"; then
+            log "  Rate limit still active. Waiting another 5 minutes..."
+        else
+            log "  Rate limit cleared. Resuming."
+            return 0
+        fi
+    done
+}
+
 # Run a claude -p call with stream-json output.
 # Args: logfile prompt [extra claude args...]
 run_claude() {
@@ -50,10 +72,19 @@ run_claude() {
     prompt_tmp=$(mktemp)
     echo "$prompt" > "$prompt_tmp"
 
-    claude -p - "$@" \
-        --output-format stream-json --verbose \
-        < "$prompt_tmp" \
-        2>&1 | tee "$logfile" | jq -c --unbuffered 'del(.session_id, .uuid, .timestamp, .parent_tool_use_id, .rate_limit_info, .mcp_servers, .slash_commands, .apiKeySource, .claude_code_version, .output_style, .agents, .skills, .plugins, .fast_mode_state, .permissionMode, .modelUsage, .permission_denials, .message.model, .message.id, .message.usage, .message.stop_reason, .message.stop_sequence, .message.context_management, .tool_use_result, .total_cost_usd, .usage, .duration_ms, .duration_api_ms)' 2>/dev/null | cut -c1-200 || true
+    while true; do
+        claude -p - "$@" \
+            --output-format stream-json --verbose \
+            < "$prompt_tmp" \
+            2>&1 | tee "$logfile" | jq -c --unbuffered 'del(.session_id, .uuid, .timestamp, .parent_tool_use_id, .rate_limit_info, .mcp_servers, .slash_commands, .apiKeySource, .claude_code_version, .output_style, .agents, .skills, .plugins, .fast_mode_state, .permissionMode, .modelUsage, .permission_denials, .message.model, .message.id, .message.usage, .message.stop_reason, .message.stop_sequence, .message.context_management, .tool_use_result, .total_cost_usd, .usage, .duration_ms, .duration_api_ms)' 2>/dev/null | cut -c1-200 || true
+
+        if is_rate_limited "$logfile"; then
+            wait_for_rate_limit
+            log "  Retrying claude call..."
+            continue
+        fi
+        break
+    done
 
     rm -f "$prompt_tmp"
 }
@@ -390,7 +421,15 @@ Do NOT generate or audit a game. Only modify the generator files and commit."
         log "[Step 2: Generate] SKIPPED (--skip-to $SKIP_TO)"
     else
         log "[Step 2: Generate] Concept $CONCEPT..."
-        timeout 86400 ./generate.sh "$CONCEPT" --model "$MODEL" 2>&1 | tee run.log || true
+        while true; do
+            timeout 86400 ./generate.sh "$CONCEPT" --model "$MODEL" 2>&1 | tee run.log || true
+            if is_rate_limited "$SCRIPT_DIR/generation.log"; then
+                wait_for_rate_limit
+                log "  Retrying generation..."
+                continue
+            fi
+            break
+        done
     fi
 
     # Summarize the generation log into a timeline for the evaluate step.
