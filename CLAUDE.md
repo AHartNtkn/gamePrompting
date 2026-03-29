@@ -62,6 +62,10 @@ tmux kill-session -t game 2>/dev/null
 
 Games do NOT need special architecture to support this. A normal interactive CLI game using `input()` and `print()` works with tmux. The only requirement is unbuffered output (`python3 -u`).
 
+## No `local` Outside Functions
+
+**`local` is only valid inside bash functions.** Using `local` in the main body of a script, even inside a `while` or `for` loop, is a syntax error that crashes the script. This error has occurred repeatedly in `audit.sh` and `loop.sh`. Before writing `local`, verify you are inside a function definition (`function name() {` or `name() {`), not just inside a loop or conditional block.
+
 ## No Silent Failures
 
 **Silent failures are forbidden.** Every failure must be loud, visible, and cause an immediate crash or retry. Never use `|| true`, `2>/dev/null`, or any pattern that swallows errors without logging them and taking action. If a step fails, the loop must either retry with logging or crash with a clear error message. A loop that continues past a silent failure produces corrupt data that is harder to debug than a crash.
