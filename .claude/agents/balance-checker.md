@@ -60,7 +60,23 @@ For each resource that governs action availability (stamina, AP, energy, mana, s
 
 **Pass criteria**: The most common action must have net_cost < 0 (net resource drain under normal use).
 
-### 6. Parallel Option Parity Test
+### 6. Runaway Leader Test
+
+This is the inverse of the Death Spiral Test. Test what happens when a player is winning:
+
+1. Put the game state into a dominant position at midgame: 150% of normal resources, key metrics elevated
+2. Run 10 simulations from this state with passive/average play
+3. Measure: does the winning advantage compound indefinitely, or does it face counter-pressure?
+
+Report:
+- Final score/outcome from winning-start vs. baseline-start
+- If winning-start is more than 3x better on average: a runaway leader dynamic exists. Name the feedback loop.
+- Does the AI/opposition scale in response to player dominance? If not, report it.
+- If no counterforce prevents trivial winning: suggest a specific counter-mechanism (e.g., opposition aggression scales with player advantage; high-performance thresholds trigger new threats; dominant resource positions attract higher costs).
+
+**Pass criteria**: A player in a dominant position should still face real decisions to maintain it.
+
+### 7. Parallel Option Parity Test
 
 For each category of parallel choices the player makes (attack target types, starting loadout, strategic approach, weapon choice, build path, approach style):
 

@@ -36,6 +36,7 @@ You are a design reviewer. Your job is to read a game's source code and design n
 - **Missing failure states** — the player cannot lose or failing has no consequence
 - **Unrecoverable death spirals** — once a key metric (health, reputation, resources) starts declining, there is no viable recovery path. Check every major negative feedback loop: what counter-pressure exists to slow or reverse it?
 - **Missing feedback loops** — winning compounds without limit (snowball) or losing compounds without limit (death spiral)
+- **Missing catch-up mechanism** — the game has positive feedback loops that compound winning, but no counter-pressure that activates when a player is dominant. Check: what happens when the player has 2x the normal resource level and is leading on all key metrics? Does anything change to make maintaining that lead harder? If nothing scales against a dominant player, the game's winning state is trivially easy and the late game lacks tension. Report the specific positive feedback loops and what counter-pressure (if any) exists against each.
 - **Dead ends** — reachable game states with no valid continuation
 - **Perfect information** — every relevant game state is displayed at all times with no discovery mechanism. Check: is there anything the player must actively investigate to learn?
 
