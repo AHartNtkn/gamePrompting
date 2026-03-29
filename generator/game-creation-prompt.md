@@ -136,6 +136,7 @@ Then perform this **mandatory pre-delivery checklist** yourself before finishing
 - Estimate the challenge of each major encounter or phase using the simplest strategy available.
 - The challenge must strictly increase. If encounter 3 is harder than encounter 5, rebalance.
 - State your difficulty estimates explicitly in a comment block. Gut feel is not enough — trace the math.
+- For probabilistic primary actions (attacks, hacks, persuasion rolls): verify the baseline success rate at medium difficulty with no player bonuses is 60–75%. A primary action that succeeds 90%+ of the time at average difficulty eliminates tension from the core mechanic. Reserve 90%+ success rates only for trivially easy targets.
 
 **Degenerate strategy test** (required):
 - Identify the three simplest possible strategies (e.g., "always pick highest-damage option," "always ally with the strongest faction," "always retreat/delay").
@@ -174,6 +175,7 @@ Then perform this **mandatory pre-delivery checklist** yourself before finishing
 - Grep your codebase for every use of each phase/alert state variable.
 - Verify at least one result is a behavioral read: a conditional that gates player or AI actions, modifies a damage/success formula, or makes new options available — NOT just a display string or narrative message.
 - If the phase variable is only read in print/display code, your phases produce labels without mechanical consequences. Every phase transition must change at least one concrete game behavior. Write the function name and line where each phase is read as a behavioral reader; if you cannot, the phase is cosmetic and will fail the audit.
+- **Phase verb set differentiation** (required): Compare the action menu available at Phase 1, Turn 3 vs. Phase 2, Turn 3. If more than 80% of action types are identical, the transition is cosmetic. Each phase transition must: (a) make at least one new action CATEGORY available, and (b) retire or significantly change at least one previously central action. Adding a single extra option to an otherwise identical menu is not a phase transition — it is one more button.
 
 **Rule symmetry audit** (required if game has AI opponents or rivals):
 - List every validation check applied to player actions (e.g., "cannot use ability X in state Y," "cannot retreat from position Z").
@@ -196,6 +198,23 @@ Then perform this **mandatory pre-delivery checklist** yourself before finishing
 - List every starting option (layout A/B/C, build archetype, starting faction, initial configuration).
 - For each pair of options, identify at least one player goal or strategy where option A is meaningfully better than option B. If you cannot find any situation where option A beats option C, option A is strictly dominated — redesign it.
 - A spread of 50+ percentage points on a key mechanic between options with no compensating advantage for the lower option is not asymmetry, it is a ranked tier. Asymmetry means different strengths for different situations, not different amounts of the same strength.
+
+**Threat active mitigation test** (required if game has threat/alert/suspicion/opposition systems):
+- Identify the primary threat resource (alert level, heat, suspicion, opposition pressure, enemy aggression).
+- Set it to ELEVATED state (50%+ of maximum). Take ONLY recovery/defensive actions (WAIT, guard, rest, hide) for 10 turns. No offensive or countermeasure actions.
+- If the threat level at turn 10 is LOWER than at the start: the threat self-resolves without player action. This is a design failure. Players will learn to passively wait out any crisis. Fix: the threat must INCREASE when the player takes no offensive or countermeasure action, OR decay ONLY in response to specific player countermeasure actions (not generic waiting).
+- Additionally: at maximum threat level, attempt routine social interaction with a non-hostile NPC (neutral civilian, bureaucrat, bystander). If their response is identical to their response at minimal threat: the NPC system is threat-blind. Fix: add at least two NPC behavior branches outside the primary opposition role (e.g., civilians at high alert refuse routine requests; bystanders acknowledge the crisis; neutral factions become uncooperative).
+
+**Win condition reachability test** (required if game has multiple starting configurations):
+- List every distinct starting configuration (class, faction, disguise, build, loadout).
+- For each, trace the COMPLETE path from game start to win condition: every required location, item, action, and progression threshold.
+- Confirm each step in the win path is accessible from this starting configuration. Do not assume — verify.
+- If any starting configuration lacks a clear, confirmed path to the win condition: that configuration is a trap. Fix it before delivery. "I think they can find a way" is not sufficient.
+
+**Acquisition ordering test** (required if game has gated content):
+- List every item, location, or action gated behind a prerequisite (an intel piece, a key, an unlock, a phase threshold).
+- For each: simulate the natural exploration order (player reaches the gated location BEFORE acquiring the prerequisite, then later acquires the prerequisite). Is the content now accessible? Or is the player permanently locked out because they visited too early?
+- Natural play visits locations in any order. Never assume the player will discover the prerequisite before finding the gated content. Fix: make gated content (re-)accessible after the prerequisite is acquired, regardless of when the location was first visited.
 
 **End-state accuracy check** (required):
 - Identify the primary win/lose condition (the thing that most determines whether the player "succeeded" or "failed").

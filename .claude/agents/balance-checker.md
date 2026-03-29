@@ -90,16 +90,49 @@ For each category of parallel choices the player makes (attack target types, sta
 
 ### 8. Passive Strategy Test
 
-Test whether a player can win by taking only passive/defensive actions (guard, wait, evade, retreat, stall) without engaging the game's primary offensive mechanics.
+Test whether a player can win or stall indefinitely by taking only passive/defensive actions (guard, wait, evade, retreat, stall) without engaging the game's primary offensive mechanics.
 
+**Part A — Win rate test:**
 1. Simulate a player who takes ONLY the cheapest defensive action every turn for a full encounter (or until the time limit). Never attacks, never uses primary mechanics.
 2. Measure: what is the win rate? What is the survival rate to the time limit?
 3. If pure passivity wins more than 20% of encounters OR survives indefinitely with a positive expected outcome: a degenerate passive strategy exists.
 4. Report explicitly: "Passive-only strategy: survived {N}/{N} encounters for {N} rounds, {N}% resources remaining — DEGENERATE PASSIVE STRATEGY"
 
-**Pass criteria**: A player taking only defensive actions must lose or face escalating disadvantage within normal encounter length. The dominant strategy must require engagement with the game's primary mechanics.
+**Part B — Threat self-resolution test (CRITICAL):**
+1. Identify the primary threat resource (alert level, suspicion, heat, enemy pressure, opposition strength).
+2. Set the game state to ELEVATED threat (50-75% of maximum threat level) — the state a player reaches after making mistakes.
+3. Simulate 15 turns of ONLY defensive/recovery actions (WAIT, guard, rest, hide). No offensive or countermeasure actions.
+4. Measure: is the threat level at turn 15 LOWER than at turn 0?
+5. If yes: the threat self-resolves without offensive action. This is a CRITICAL failure — players learn to wait out any bad situation. The primary threat must require active countermeasure or offensive action to reduce.
+6. Report: "Threat self-resolution: starting threat={X}, threat after 15 passive turns={Y}. [CRITICAL if Y < X]"
 
-If passive strategy is degenerate: suggest a specific counter-mechanism (e.g., opponent gains a resource each round player does not attack; passive rounds trigger an escalating threat; morale drains from inaction; a timer forces engagement).
+**Pass criteria**: A player taking only defensive actions must lose or face escalating disadvantage. The primary threat must NOT decline from passive waiting alone.
+
+If passive strategy is degenerate: suggest a specific counter-mechanism (e.g., threat escalates each turn player takes no offensive action; passive rounds trigger compounding penalty; primary threat only decays when player takes specific countermeasure action, not generic waiting).
+
+### 9. Baseline Primary Action Success Rate Test
+
+For games where the primary player action is probabilistic (attacks, hacks, persuasion rolls, negotiations, votes):
+
+1. Identify the primary probabilistic action — the one a typical player uses most turns.
+2. Establish what constitutes a "medium difficulty" target: average stats, no player bonuses, no special circumstances, the most common scenario a player encounters.
+3. Simulate 30 attempts at medium difficulty with baseline player stats (no items, no buffs, no experience bonuses).
+4. Compute the observed success rate.
+5. Report: "Primary action '[name]' at medium difficulty (no bonuses): {X}% success rate"
+
+**Pass criteria**: Baseline success rate at medium difficulty must be 60–75%. If > 80%: the primary action is too permissive — it eliminates tension from the game's core mechanic. Players who fail 1 in 20 tries feel no real risk. Reserve 90%+ success rates only for trivially easy targets, not the average case.
+
+If baseline > 80%: lower the base success rate or raise the threshold that constitutes "medium difficulty."
+
+### 10. Turn Budget Pressure Test
+
+If the game has a fixed turn limit or time budget:
+
+1. Simulate a complete run using a non-optimal but reasonable strategy: take 2 unnecessary recovery actions per 5 turns, avoid the single most efficient route, make one suboptimal choice per phase transition.
+2. Measure what fraction of the total turn budget is consumed at game end (win or loss).
+3. Report: "Non-optimal run consumed {X}% of {N}-turn budget"
+
+**Pass criteria**: A non-optimal but reasonable run must consume at least 60% of the turn budget. If < 60%: the turn limit is decorative and creates no urgency. Reduce the budget by 25–30% or increase the minimum number of turns required for each phase.
 
 ## What to Report
 
@@ -115,7 +148,7 @@ If passive strategy is degenerate: suggest a specific counter-mechanism (e.g., o
 
 After running all 8 tests:
 
-**If any critical failures exist (dominant strategy >80%, parity ratio >3x, net resource cost >= 0, passive strategy degenerate):**
+**If any critical failures exist (dominant strategy >80%, parity ratio >3x, net resource cost >= 0, passive strategy degenerate, threat self-resolves, baseline primary action success >80%, turn budget <60% consumed by non-optimal play):**
 
 Report each failure with specific numbers and the required fix. State: "BALANCE BLOCKED: {N} critical balance failures found. The generator must fix every critical failure and RE-RUN the balance-checker to confirm. Fixes that are not re-verified are not accepted."
 

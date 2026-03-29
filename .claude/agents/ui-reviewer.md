@@ -128,6 +128,45 @@ Example:
                OR change the narrative to accurately describe the outcome.
 ```
 
+### Check 8: Context-Sensitive Description Accuracy
+
+Find every action description, tooltip, or help text that shows a numerical effect to the player (e.g., "+8% cover recovery", "+10 damage", "50% chance of success").
+
+For each displayed value:
+1. Locate the code that generates this text. Is the value hardcoded in the string, OR computed from the actual effect function?
+2. If hardcoded: check whether the actual mechanical effect VARIES by context (zone type, alert level, player state, target type, active modifiers).
+3. If the actual effect is context-dependent but the description shows a fixed value that is only accurate in some contexts: it is a **[CONTEXT MISMATCH]**.
+
+The test: can a player in context A (e.g., safe zone) read an action description that would be accurate in context B (e.g., restricted zone) and receive wrong information? If yes, report it.
+
+```bash
+grep -rn "recover\|bonus\|chance\|success\|damage\|effect" GAME_DIR/*.py | grep "print\|f\"" | head -40
+```
+
+For each match, trace to the underlying effect computation and check if it branches on current context.
+
+Example findings:
+- WAIT tooltip shows "+8% cover recovery" in all zones, but actual recovery in restricted zones is 0%
+- Attack preview shows "+15 damage" but actual damage varies by target armor category
+
+### Check 9: Probability Estimate Completeness
+
+Find every probability estimate displayed before the player commits to an action (e.g., "~65% success", "estimated hit chance: 40%").
+
+For each estimate:
+1. Identify ALL modifiers that affect the actual probability: approach selection, items held, status effects, target difficulty, zone state, alert level, etc.
+2. Identify which of these modifiers the player has ALREADY SELECTED at the moment the estimate is shown (e.g., player picked "Aggressive approach" before seeing the estimate).
+3. Trace the estimate computation: does it incorporate all already-selected modifiers?
+4. If any modifier the player has already committed to is OMITTED from the displayed estimate, it is an **[ESTIMATE INCOMPLETE]**.
+
+The critical case: player selects approach X → sees probability estimate → commits. If the estimate doesn't include approach X's modifier, the player made their decision on wrong information.
+
+```bash
+grep -rn "estimated\|est\..*success\|~.*%\|success.*rate\|probability\|chance.*%" GAME_DIR/*.py | grep "print\|f\"" | head -30
+```
+
+For each estimate display, find the computation function and check which modifiers it incorporates vs. which modifiers the player may have already selected.
+
 ## How to Work
 
 1. Read all source files to understand the game's structure.
@@ -176,7 +215,7 @@ Example:
 
 ## Final Verdict
 
-After all six checks:
+After all nine checks:
 
 **If any findings exist:**
 ```
@@ -187,7 +226,8 @@ The generator must fix each finding before delivery.
 
 **If no findings:**
 ```
-UI VERIFIED: All seven information design checks passed.
+UI VERIFIED: All nine information design checks passed.
 No label conflicts, hidden gates, unquantified decisions, timing mismatches,
-silent actions, state mismatches, or direction mismatches found. Delivery approved by ui-reviewer.
+silent actions, state mismatches, direction mismatches, context-sensitive description errors,
+or probability estimate omissions found. Delivery approved by ui-reviewer.
 ```
