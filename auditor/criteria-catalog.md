@@ -1198,6 +1198,30 @@ Are game entities composed from reusable components or behaviors rather than dee
 Are system dependencies explicit and acyclic? Can you trace what depends on what? Or are there circular dependencies, global mutable state accessed from everywhere, or hidden coupling through shared state?
 *(CDDA deprecated g-> pointer pattern. Circular dependency as universal anti-pattern. Command pattern for trackable state mutation)*
 
+**W13. Debug Mode / State Manipulation**
+Does the game include a debug or dev mode that allows jumping to specific game states, spawning entities, triggering events, manipulating time, or forcing conditions? Can a developer reach any game state in seconds rather than playing through to it?
+*(RimWorld dev mode with 7 integrated tools, CDDA debug menu with teleport/spawn/time control, Dwarf Fortress object testing arena, Factorio console + sandbox mode)*
+
+**W14. Headless / Automated Testability**
+Can the game simulation run without display or human input — headless mode for automated testing, Monte Carlo balance simulation, or CI integration? Can you script 1000 simulated games to find balance problems?
+*(Factorio 24/7 test server with headless black-box tests, Monte Carlo playtesting research, Cogmind standalone map generator)*
+
+**W15. Deterministic Reproducibility**
+Given the same random seed and inputs, does the game produce identical results? Are seeds exposed so that specific procedural content or game sessions can be reproduced for debugging? Can a bug report include a seed that reproduces the problem?
+*(Cogmind per-feature seed storage, Factorio CRC determinism checks, deterministic replay as debugging standard)*
+
+**W16. Data Validation at Load Time**
+Does the game validate its data files when loading? Does it check reference integrity (item references valid material), value ranges (damage > 0, probability between 0-1), required fields, and format correctness? Does it produce clear error messages for invalid data?
+*(CDDA JSON validation scripts + CI test suite, Cogmind error checker for .xt data files, Factorio prototype validation, Unreal Data Validation pattern)*
+
+**W17. State Inspection During Play**
+Can a developer inspect the internal state of any game object during play — see exact variable values, active flags, pending events, AI state — without an external debugger? Is there a state dump command or inspect mode?
+*(RimWorld Inspector click-to-inspect, CDDA debug messages overlay (~), Cogmind mid-run stat dumps, roguelike morgue files)*
+
+**W18. Game Speed Control** `[CONDITIONAL: game has time-based simulation]`
+Can the simulation be accelerated to observe long-term dynamics quickly? Can it be paused for inspection? Variable game speed (1x/2x/4x/pause) lets developers observe resource depletion, population growth, or economic collapse in minutes rather than hours.
+*(Universal in simulation/management games — Factorio, RimWorld, Dwarf Fortress, most 4X games)*
+
 ---
 
 ## Summary
@@ -1226,5 +1250,5 @@ Are system dependencies explicit and acyclic? Can you trace what depends on what
 | T. Goal Structure | 5 |
 | U. Specific Design Lenses | 12 |
 | V. Visual Representation & ASCII Graphics | 12 |
-| W. Code Architecture & Iteration Quality | 12 |
-| **Total** | **264** |
+| W. Code Architecture & Iteration Quality | 18 |
+| **Total** | **270** |

@@ -113,3 +113,57 @@ Trace the dependency structure. Check:
 - Can you understand what a module depends on by reading its imports?
 
 Score 0 if dependencies are circular, global state is accessed everywhere, and you can't modify one module without understanding all others. Score 2 if most dependencies are clear but some hidden coupling exists through shared state. Score 4 if dependencies are explicit, acyclic, and traceable — each module's dependencies are visible in its imports and it doesn't reach into other modules' internals.
+
+### W13. Debug Mode / State Manipulation (0-5)
+
+Check whether the game includes tools for jumping to specific states. Check:
+- Can a developer spawn entities, trigger events, set time, or force conditions without playing through the game?
+- Is there a debug menu, console, cheat mode, or arena/sandbox mode?
+- Can late-game content be tested without playing through the early game?
+
+Score 0 if there is no way to manipulate game state except by playing normally — testing late-game content requires playing through the entire early and mid game. Score 2 if some manipulation exists (e.g., cheat codes for resources) but you can't reach arbitrary game states. Score 4 if the game has comprehensive state manipulation — spawn anything, teleport anywhere, trigger any event, set any variable — enabling any game state to be reached in seconds.
+
+### W14. Headless / Automated Testability (0-5)
+
+Check whether the simulation can run without human interaction. Check:
+- Can the game run without display or input for automated testing?
+- Could you script 100 simulated games to gather balance data?
+- Can game systems be exercised programmatically (import and call functions directly)?
+
+Score 0 if the game requires interactive input for every turn and cannot run unattended — no way to automate playtesting. Score 2 if some systems can be called programmatically but the full game loop requires human input. Score 4 if the simulation can run fully headless with scripted input, enabling automated balance testing, regression testing, and Monte Carlo simulation.
+
+### W15. Deterministic Reproducibility (0-5)
+
+Check whether identical inputs produce identical outputs. Check:
+- Given the same random seed, does the game produce the same procedural content and outcomes?
+- Are seeds exposed (visible to the player or developer) for reproduction?
+- Could a bug report include a seed that reproduces the exact scenario?
+
+Score 0 if the game has no seed system and no way to reproduce a specific game session. Score 2 if seeds exist but are not exposed, or determinism is approximate (mostly the same but with minor variations). Score 4 if the game is fully deterministic given a seed, seeds are exposed and logged, and any game session can be reproduced exactly.
+
+### W16. Data Validation at Load Time (0-5)
+
+Check whether the game validates its own data. Check:
+- Does loading data files check for invalid values (negative health, probabilities > 1, missing required fields)?
+- Does it check reference integrity (item references valid material, enemy references valid attack)?
+- Does it produce clear error messages identifying what's wrong and where?
+
+Score 0 if there is no data validation — malformed data causes silent corruption or cryptic runtime errors. Score 2 if some validation exists but gaps remain (some fields unchecked, some references unvalidated). Score 4 if data loading includes comprehensive validation with clear, actionable error messages for every failure mode.
+
+### W17. State Inspection During Play (0-5)
+
+Check whether internal state is observable. Check:
+- Can the developer see the exact value of any game variable during play?
+- Is there an inspect command, debug overlay, or state dump?
+- Can AI decision state, pending events, and hidden variables be viewed?
+
+Score 0 if internal state is completely opaque during play — understanding what's happening requires reading source code and adding print statements. Score 2 if some state is visible (e.g., a status command shows player stats) but internal systems are opaque. Score 4 if comprehensive state inspection is available — any game object's full internal state can be viewed on demand during play.
+
+### W18. Game Speed Control (0-5) `[CONDITIONAL: game has time-based simulation]`
+
+Check whether simulation speed is controllable. Check:
+- Can the game be run at accelerated speed to observe long-term dynamics?
+- Can it be paused for inspection?
+- Is there a fast-forward or skip-to-turn-N capability?
+
+Score 0 if the game runs at one fixed speed with no acceleration or pause. Score 2 if pause exists but no acceleration, or acceleration is limited (2x only). Score 4 if the game supports flexible speed control — pause, normal, fast, and very fast — enabling long-term dynamics to be observed in minutes.

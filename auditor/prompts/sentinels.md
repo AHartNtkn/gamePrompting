@@ -242,6 +242,12 @@ Check: Count numeric literals in game logic (excluding data definitions and arra
 **S70. Hardcoded Content**
 Check: Are items, enemies, abilities, and events defined in centralized data structures or scattered as conditionals in game logic? If >50% of content is inline rather than data-driven, FAIL.
 
+**S71. No Debug/Test Mode**
+Check: Search for debug commands, cheat codes, console interfaces, god mode, spawn commands, arena mode, or any developer-facing state manipulation. If none exist, FAIL.
+
+**S72. Non-Reproducible Randomness**
+Check: Does the game set and log a random seed? Does providing the same seed produce the same game? If there's no seed system or the seed isn't logged/displayed, FAIL.
+
 ## Output Format
 
 Output your results in exactly this format:

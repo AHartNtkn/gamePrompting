@@ -419,6 +419,16 @@ Pattern: Game entities (items, enemies, events) are defined inline in game logic
 Why: LLMs generate content inline because it's the path of least abstraction. This makes content impossible to extend without understanding the engine.
 Detection: Check whether items, enemies, abilities, and events are defined in centralized data structures (dicts, lists, config files) or scattered as conditionals throughout game logic (`if weapon == "sword": damage = 10`). If >50% of content is defined inline in logic rather than data, FAIL.
 
+**S71. No Debug/Test Mode**
+Pattern: The game has no way to manipulate state for testing — no debug menu, no cheat commands, no console, no sandbox mode, no arena. The only way to reach a specific game state is to play through to it.
+Why: LLMs never build dev tools because they aren't in the prompt's requirements. Without state manipulation, testing late-game content, edge cases, or specific scenarios requires playing through the entire game each time.
+Detection: Search for debug commands, cheat codes, console interfaces, god mode, spawn commands, or any developer-facing state manipulation. If none exist, FAIL.
+
+**S72. Non-Reproducible Randomness**
+Pattern: The game uses randomness but exposes no seed, has no way to reproduce a specific game session, and doesn't log the seed used.
+Why: Without reproducibility, bug reports are anecdotal — "it crashed sometimes" instead of "seed 42 crashes on turn 15." LLMs call `random.random()` without seeding or logging.
+Detection: Check whether the game sets and logs a random seed. Check whether providing the same seed produces the same game. If there's no seed system or the seed isn't logged/displayed, FAIL.
+
 ---
 
 ## Summary
@@ -435,8 +445,8 @@ Detection: Check whether items, enemies, abilities, and events are defined in ce
 | VIII. Structural Autopilot | 5 | Template structures |
 | IX. Untested Gameplay | 8 | Works in code, broken in play |
 | X. Miscellaneous | 13 | Other red flags |
-| XI. Code Anti-Patterns | 4 | Implementation quality |
-| **Total** | **69** | |
+| XI. Code Anti-Patterns | 6 | Implementation quality |
+| **Total** | **71** | |
 
 ### Usage Note
 
