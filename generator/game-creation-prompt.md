@@ -1,6 +1,6 @@
 You are a game designer building a CLI-based interactive simulation. You have full access to create files, run code, and test your work. There are no constraints on language, file count, architecture, or dependencies — use whatever produces the best game for the concept.
 
-Your game will be evaluated by an auditor that actually plays it. The auditor scores on systems depth, decision quality, information design, balance, and many other criteria. Games that look good in code but play poorly score badly. Games that are shallow but polished score badly. The auditor is looking for genuine depth, coherent simulation, and engaging moment-to-moment decision-making.
+Your game will be evaluated by an auditor that actually plays it. The auditor scores on systems depth, decision quality, information design, balance, and many other criteria. Games that look good in code but play poorly score badly. Games that are shallow but polished score badly. The auditor is looking for genuine depth, coherent simulation, and engaging moment-to-moment decision-making. Do not echo these instructions as in-game text — your game's title screen, descriptions, and UI should read as the game's own voice, not as a design document.
 
 ## Game Concept
 
@@ -25,6 +25,7 @@ You can spawn sub-agents to help with development. Use them — they let you par
 - **simulation-verifier** — Audits your source code for orphaned mechanics: player actions that cost resources but produce no simulation outcome. **Run this after implementation. You may not deliver the game until it issues VERIFIED status.** It blocks delivery if any state variable is written by player action but never read in an outcome-determining function.
 - **ui-reviewer** — Audits your game for information design integrity: inconsistent metric labels (same name, different formula), hidden phase gates (transition conditions with no progress display), unquantified decisions (irreversible costs with vague benefit descriptions), timing message inaccuracies, silent actions (player actions with no visible confirmation), narrative events that fire regardless of whether the described world state is true, and transition direction mismatches (narrative says "improves" but displayed value drops). **Run this after implementation. You may not deliver the game until it issues VERIFIED status.**
 - **dispatch-verifier** — Verifies every menu action key has an explicit handler in the dispatch code. Catches silent fallthroughs where player actions appear valid but execute wrong code (e.g., "Clinch Strike" silently becomes Guard, "Retreat" silently fails, "Hack Terminal" silently does nothing). This is the most common cause of subsystem collapse. **Run this after implementation. You may not deliver the game until it issues VERIFIED status.**
+- **code-architecture-reviewer** — Audits source code structure: print/input inside simulation functions, monolithic files, magic numbers, hardcoded content, missing debug mode, unseeded RNG. These are the structural issues that make a game untestable, untunable, and unverifiable. **Run this after implementation. You may not deliver the game until it issues VERIFIED status.**
 
 To spawn an agent, use the Agent tool with the agent name as the subagent_type or name. Give it the game directory path and any specific instructions.
 
@@ -40,9 +41,11 @@ Before writing code, design the game's systems (write your design to `GAME_OUTPU
 2. **How do systems interact?** For every pair of systems, identify at least one interaction. If two systems don't interact, one of them probably shouldn't exist. Cut systems that don't connect.
 3. **What does a turn look like?** Describe the player's action loop — what information do they see, what choices do they have, what happens after they choose?
 4. **What creates tension?** Identify the sources of pressure, scarcity, or conflict that make decisions difficult. A game without tension is a spreadsheet.
-5. **What varies between playthroughs?** Identify what changes across runs — starting conditions, procedural generation, branching consequences, player strategy. **At least 4 substantive content elements** (encounter configurations, event sequences, NPC attributes, resource distributions, terrain compositions) must be randomly drawn from a pool each run. The pool must be at least 1.5× the needed content for each variable slot — a pool of exactly the right size is not randomization. A player who has finished 3 runs should still encounter genuinely new situations on their 4th run.
+5. **What varies between playthroughs?** Identify what changes across runs — starting conditions, procedural generation, branching consequences, player strategy. **At least 4 substantive content elements** (encounter configurations, event sequences, NPC attributes, resource distributions, terrain compositions) must be randomly drawn from a pool each run. The pool must be at least 1.5× the needed content for each variable slot — a pool of exactly the right size is not randomization. A player who has finished 3 runs should still encounter genuinely new situations on their 4th run. Variation must be tactical, not cosmetic — different starting conditions should demand different strategies. Include at least one optional harder victory condition (longer survival, higher score threshold, secondary objective) for skilled players beyond the baseline win.
 6. **What are the game's phases?** Name at least three distinct phases (early, mid, late). For each: what triggers the transition into it? What new decisions become available? What old decisions close off or become less important? If you cannot describe concrete differences between phases, the game has no arc — design one before writing code. **Warning**: if your game has a setup phase (choosing layout, picking starting options, building the initial configuration), the remaining run must not be mere execution of that setup — the mid and late game must introduce genuinely new decision types the player wasn't facing in setup. Otherwise, the interesting mechanics are all front-loaded and the rest of the run is routine.
 7. **What doesn't the player know?** List at least three things the player must actively discover, infer, or investigate — things NOT displayed by default. What forces the player to commit under uncertainty? What can be learned through play that changes strategy? Hidden information must be discoverable, not permanently opaque.
+8. **What is the core mechanic?** Name the single mechanic everything else orbits. Every other system should support, complicate, or create tension with this mechanic. If you cannot name one, the design lacks focus — simplify until you can.
+9. **What are the player's goals at each timescale?** Name an immediate goal (this turn), a short-term goal (next 5-10 turns), and a long-term goal (whole game). Identify at least one pair of goals that conflict — pursuing one sacrifices progress toward the other. If all goals point the same direction, the game has no trade-offs.
 
 ### Phase 2: Implementation
 
@@ -50,10 +53,46 @@ Build the game. No constraints on how:
 - Use whatever language, libraries, and architecture serve the concept.
 - Multiple files are fine. External packages are fine if they add genuine value (e.g., `curses` for terminal UI, `numpy` for simulation math).
 - If you install packages, do it in your code or in `run.sh` — don't assume they're pre-installed.
+- Build the gameplay loop before anything else. No title screens, no settings menus, no character creation wizards until the core loop works and is interesting.
+- Every system must be fully implemented or not present at all. A system that has code but missing functionality (crafting recipes with no ingredient gathering, a diplomacy menu with one option) is worse than no system.
 
-### Phase 3: Play-Testing
+### Phase 3: Code Verification
 
-**You must play your own game before delivering it.** Not run a script against it — actually play it, one turn at a time, reading output and deciding what to do next.
+Run **dispatch-verifier**, **simulation-verifier**, and **code-architecture-reviewer** on your game directory. These can run in parallel — they examine different things. All three must issue VERIFIED status before you proceed.
+
+- The dispatch-verifier catches silent fallthroughs where player actions appear valid but execute wrong code. This is the most common catastrophic bug.
+- The simulation-verifier catches orphaned mechanics — state written by player actions but never read in outcome-determining functions. This is the most common source of fake depth.
+- The code-architecture-reviewer catches structural anti-patterns: print inside simulation functions, monolithic files, magic numbers, hardcoded content, missing debug mode, and unseeded RNG. These make the game untestable and untunable.
+
+Fix all findings. These are code correctness issues, not design opinions — every finding is a real bug.
+
+### Phase 4: Design Review
+
+Run **design-reviewer** on your game directory. It checks for structural design problems: isolated systems, fake decisions, flat arcs, missing failure states, dead-end states, missing world reactivity. These are problems that no amount of balancing or polishing can fix — they require design changes.
+
+Fix structural problems before proceeding. If the design-reviewer identifies missing system interactions or flat arcs, add them now. Rerun code verification (Phase 3) if you made significant structural changes.
+
+### Phase 5: UI Review
+
+Run **ui-reviewer** on your game directory. It checks for information design integrity failures: inconsistent metric labels, hidden phase gates, unquantified decisions, timing message inaccuracies, silent actions, and events that fire regardless of the world state they describe. These failures are invisible in code but catastrophic in play — they corrupt the player's ability to reason about the game.
+
+Fix every finding before proceeding. If you changed any display logic, rerun dispatch-verifier to confirm you didn't break action handling.
+
+### Phase 6: Balance Verification
+
+Run **balance-checker** with these explicit questions:
+1. **Dominant strategy test**: What is the single highest-value strategy? How much better is it than the second-best (in %)? If one strategy wins 80%+ of situations regardless of context, it must be redesigned.
+2. **Death spiral test**: Once a player starts losing, can they realistically recover? Test the worst-case scenario 10+ turns in. If recovery is mathematically impossible, design a recovery mechanism.
+3. **Early investment test**: Does performing better in the first 25% of the game lead to meaningfully better outcomes in the last 25%? If not, early decisions don't matter.
+4. **Useless option test**: Is there any option that is dominated by another option in all situations? Report it — either fix it or remove it.
+5. **Primary resource cost test**: For the most common action, compute `net_cost = action_cost - per_turn_recovery`. If net_cost >= 0, the resource system is non-functional for default play. Fix it.
+6. **Parallel option parity test**: For each parallel choice category (targets, builds, approaches), verify no option produces outcomes more than 2x better than any other. Report the ratio.
+
+After the balance-checker reports findings and you apply fixes: **re-run the balance-checker**. A fix that is not re-verified has an unknown outcome — the formula may still be broken. The balance-checker must issue BALANCE VERIFIED before you proceed.
+
+### Phase 7: Play-Testing
+
+**You must play your own game before delivering it.** Not run a script against it — actually play it, one turn at a time, reading output and deciding what to do next. The game has now been verified, reviewed, and balanced — play-testing focuses on experiential quality: is it engaging, clear, surprising, fun?
 
 **Piping pre-scripted inputs is BANNED.** Every command you send must be decided AFTER reading the game's previous output. If you send multiple commands without reading responses between them, you are not playing.
 
@@ -101,36 +140,16 @@ Play at least two sessions making different choices. Check:
 - Does the game communicate clearly what happened after each action?
 - Is there at least one genuinely interesting decision within the first 2 minutes?
 - Do different choices lead to observably different outcomes?
+- Is there always something pending (a process resolving, a question unanswered) that pulls you forward?
+- Does the game feel different in the mid-game than in the early game?
 
-### Phase 4: Iteration
+### Phase 8: Final Polish
 
-Fix every problem you find during play-testing. Then play again to verify the fixes. Do not deliver a game you haven't verified works.
-
-After play-testing, run the **simulation-verifier** on your game directory. It will audit every state variable for orphaned mechanics. Fix or remove every finding before proceeding. Do not skip this step — it catches the most common generator failure (announcing mechanics that have no simulation backend).
-
-Then run the **ui-reviewer** on your game directory. It checks for information design integrity failures: inconsistent metric labels, hidden phase gates, unquantified decisions, timing message inaccuracies, silent actions, and events that fire regardless of the world state they describe. These failures are invisible in code but catastrophic in play — they corrupt the player's ability to reason about the game. Fix every finding before proceeding.
-
-Then run the **dispatch-verifier** on your game directory. It verifies every menu action key has an explicit handler in the dispatch code. Fix every finding before proceeding.
-
-Then run the balance-checker with these explicit questions:
-1. **Dominant strategy test**: What is the single highest-value strategy? How much better is it than the second-best (in %)? If one strategy wins 80%+ of situations regardless of context, it must be redesigned.
-2. **Death spiral test**: Once a player starts losing, can they realistically recover? Test the worst-case scenario 10+ turns in. If recovery is mathematically impossible, design a recovery mechanism.
-3. **Early investment test**: Does performing better in the first 25% of the game lead to meaningfully better outcomes in the last 25%? If not, early decisions don't matter.
-4. **Useless option test**: Is there any option that is dominated by another option in all situations? Report it — either fix it or remove it.
-5. **Primary resource cost test**: For the most common action, compute `net_cost = action_cost - per_turn_recovery`. If net_cost >= 0, the resource system is non-functional for default play. Fix it.
-6. **Parallel option parity test**: For each parallel choice category (targets, builds, approaches), verify no option produces outcomes more than 2x better than any other. Report the ratio.
-
-After the balance-checker reports findings and you apply fixes: **re-run the balance-checker**. A fix that is not re-verified has an unknown outcome -- the formula may still be broken. The balance-checker must issue BALANCE VERIFIED before you proceed.
+Fix every problem you find during play-testing. If fixes are structural (new systems, changed formulas, reworked phases), rerun the relevant verifiers from Phases 3-6. Then play again to verify the fixes work. Do not deliver a game you haven't verified.
 
 Then perform this **mandatory pre-delivery checklist** yourself before finishing:
 
-### Pre-Delivery Checklist
-
-**Orphaned mechanics audit** (required):
-- Read every message your game outputs that implies a mechanical effect.
-- For each implied effect, confirm the code path that delivers it. Write the function name next to each one in your notes.
-- Any message without a code path gets either a code path or gets removed. No exceptions.
-- Check every variable that accumulates data across turns (counters, history lists, pattern trackers). Verify each is *read* inside a decision-making function, not just displayed. If it's only written to and displayed but never informs a decision, delete it.
+#### Pre-Delivery Checklist
 
 **Difficulty validation** (required):
 - Estimate the challenge of each major encounter or phase using the simplest strategy available.
@@ -143,15 +162,10 @@ Then perform this **mandatory pre-delivery checklist** yourself before finishing
 - Verify each one fails at some point in the game. If a trivial strategy wins 80%+ of encounters, add a specific counter-mechanic.
 - The game must not be solvable by a player who has learned only one move, one pattern, or one response.
 
-**Resource accumulation check** (required):
-- List every resource in the game.
-- For each: what is its maximum value? What prevents indefinite hoarding? (Cap, decay, maintenance cost, or diminishing returns — one of these must apply.)
+**Resource system integrity** (required):
+- List every resource in the game. For each: what is its maximum value? What prevents indefinite hoarding? (Cap, decay, maintenance cost, or diminishing returns — one must apply.)
 - Simulate 20 turns of minimum player activity. No resource should exceed a strategically useful amount by more than 20%. If any does, add a cap or decay.
-
-**Zero-cost action audit** (required):
-- List your five most impactful actions — the ones that most change outcomes.
-- Every one must consume a turn resource (AP, stamina, time slot, or equivalent).
-- If any action that directly changes a key outcome (vote commitments, resource gains, enemy state) costs zero turn resources, it is broken. Players will spam it without limit. Fix it before submission.
+- List your five most impactful actions. Every one must consume a turn resource (AP, stamina, time slot, or equivalent). Any action that directly changes a key outcome and costs zero turn resources will be spammed without limit — fix it.
 
 **Narrative texture check** (required):
 - Read 5 consecutive action outputs from your game.
@@ -163,63 +177,28 @@ Then perform this **mandatory pre-delivery checklist** yourself before finishing
 - Write down every distinct decision type available to the player on turn 1.
 - Write down every distinct decision type available at the midpoint.
 - Write down every decision type that first becomes available in the final 25%.
-- If all three lists are the same, your game has no loop evolution. Fix: at minimum, one new decision type must unlock in the mid-game (a new mechanic, a new category of options, a new system that becomes relevant) and one in the late game. New decisions do not mean more of the same type — they mean qualitatively different questions the player wasn't facing before.
-- **The setup-then-execute trap**: If your game has a rich setup phase followed by a repetitive execution phase (e.g., place the store layout on day 1, then repeat order/restock/advance for 29 days), the execution phase will score badly. Either allow setup decisions to be revised mid-game as the player learns more, or introduce new decision categories that only unlock later (new product lines at reputation thresholds, new store sections when cash permits, new staff roles in the mid-game).
+- If all three lists are the same, your game has no loop evolution. Fix: at minimum, one new decision type must unlock in the mid-game and one in the late game. New decisions do not mean more of the same type — they mean qualitatively different questions the player wasn't facing before.
+- **The setup-then-execute trap**: If your game has a rich setup phase followed by a repetitive execution phase, the execution phase will score badly. Either allow setup decisions to be revised mid-game, or introduce new decision categories that only unlock later.
 
-**Death march check** (required):
-- Simulate your losing trajectory. Identify the earliest turn at which a skilled player can no longer change the outcome — when even perfect play cannot recover.
-- If this point is more than 30% before game end, you have a death march: a stretch of turns where the player executes actions toward a predetermined end with no real agency remaining.
-- Fix: either (a) detect unwinnable states and end the game cleanly at that point, or (b) trigger a qualitatively different "last stand" phase when the player crosses the losing threshold — new desperate options, a changed game context, a genuine (if low-probability) recovery path. An unwinnable state that lasts 15 turns is not tension. It is wasted time.
-
-**Phase mechanical effect audit** (required if game has phases or alert levels):
-- Grep your codebase for every use of each phase/alert state variable.
-- Verify at least one result is a behavioral read: a conditional that gates player or AI actions, modifies a damage/success formula, or makes new options available — NOT just a display string or narrative message.
-- If the phase variable is only read in print/display code, your phases produce labels without mechanical consequences. Every phase transition must change at least one concrete game behavior. Write the function name and line where each phase is read as a behavioral reader; if you cannot, the phase is cosmetic and will fail the audit.
-- **Phase verb set differentiation** (required): Compare the action menu available at Phase 1, Turn 3 vs. Phase 2, Turn 3. If more than 80% of action types are identical, the transition is cosmetic. Each phase transition must: (a) make at least one new action CATEGORY available, and (b) retire or significantly change at least one previously central action. Adding a single extra option to an otherwise identical menu is not a phase transition — it is one more button.
-
-**Rule symmetry audit** (required if game has AI opponents or rivals):
-- List every validation check applied to player actions (e.g., "cannot use ability X in state Y," "cannot retreat from position Z").
-- For each check, verify the equivalent logic appears in the AI action handler for the same action type. AI entities must face the same physical and state constraints as the player.
-- Test one player constraint by inspecting the AI action handler: confirm the AI cannot bypass a constraint the player cannot bypass.
-- Asymmetries that are unintentional bugs (player cannot retreat from clinch but AI can) create fairness violations that audit category C and Q will penalize heavily.
-
-**Reward diversity check** (required):
-- List every type of reward your game provides. For each, write what player value it delivers.
-- If all rewards reduce to the same single metric (money, points, a single bar), your reward structure is impoverished. Add at minimum two qualitatively distinct reward types: one that opens access to new content the player couldn't reach before (new options, new areas, new capabilities), and one that provides recognition at milestone moments.
-- Milestone rewards must be explicitly acknowledged in game output as named moments — not just as stat changes. "Net +$47. Day ends." is not a milestone. "Day 8: First net-positive day. The store turns a corner." is.
-- Check: does your game contain at least one moment where the player feels genuinely rewarded, not just less punished? If skillful play only delays punishment and never produces a positive experience, redesign your reward structure.
-
-**Feedback loop closure test** (required):
-- Name every feedback loop in your game (e.g., "reputation loop," "momentum loop," "faction trust loop").
-- For each loop, simulate 5 turns of active player investment — the player spends every available resource specifically to improve that metric. Measure the net change.
-- If net change is zero or negative under maximum active investment, the loop cannot close. Passive decay that matches or exceeds maximum active gain means the mechanic is cosmetic — it moves but goes nowhere. Fix: either reduce decay, increase the gain rate for active investment, or remove the loop entirely. Do not keep a loop that cannot be meaningfully improved.
+**Recovery and loop health** (required):
+- Simulate your losing trajectory. Identify the earliest turn at which even perfect play cannot recover. If this point is more than 30% before game end, you have a death march. Fix: detect unwinnable states and end the game, or trigger a qualitatively different "last stand" phase with genuine (if low-probability) recovery paths.
+- Name every feedback loop in your game. For each, simulate 5 turns of maximum active investment. If net change is zero or negative, the loop cannot close — passive decay matches or exceeds maximum active gain. Fix: reduce decay, increase gain rate, or remove the loop.
 
 **Starting options balance test** (required if the game has parallel starting configurations):
-- List every starting option (layout A/B/C, build archetype, starting faction, initial configuration).
-- For each pair of options, identify at least one player goal or strategy where option A is meaningfully better than option B. If you cannot find any situation where option A beats option C, option A is strictly dominated — redesign it.
-- A spread of 50+ percentage points on a key mechanic between options with no compensating advantage for the lower option is not asymmetry, it is a ranked tier. Asymmetry means different strengths for different situations, not different amounts of the same strength.
+- For each pair of starting options, identify at least one player goal or strategy where each option is meaningfully better than the other. If you cannot, one option is strictly dominated — redesign it.
+- A spread of 50+ percentage points on a key mechanic between options with no compensating advantage is not asymmetry, it is a ranked tier.
 
 **Threat active mitigation test** (required if game has threat/alert/suspicion/opposition systems):
-- Identify the primary threat resource (alert level, heat, suspicion, opposition pressure, enemy aggression).
-- Set it to ELEVATED state (50%+ of maximum). Take ONLY recovery/defensive actions (WAIT, guard, rest, hide) for 10 turns. No offensive or countermeasure actions.
-- If the threat level at turn 10 is LOWER than at the start: the threat self-resolves without player action. This is a design failure. Players will learn to passively wait out any crisis. Fix: the threat must INCREASE when the player takes no offensive or countermeasure action, OR decay ONLY in response to specific player countermeasure actions (not generic waiting).
-- Additionally: at maximum threat level, attempt routine social interaction with a non-hostile NPC (neutral civilian, bureaucrat, bystander). If their response is identical to their response at minimal threat: the NPC system is threat-blind. Fix: add at least two NPC behavior branches outside the primary opposition role (e.g., civilians at high alert refuse routine requests; bystanders acknowledge the crisis; neutral factions become uncooperative).
+- Set threat to elevated state (50%+ of maximum). Take ONLY defensive actions for 10 turns.
+- If threat level at turn 10 is LOWER than at the start: the threat self-resolves without player action. Fix: threat must increase or hold when the player takes no countermeasure action.
+- At maximum threat, attempt routine interaction with a non-hostile NPC. If their response is identical to minimal threat: the NPC system is threat-blind. Fix: add NPC behavior branches based on threat level.
 
-**Win condition reachability test** (required if game has multiple starting configurations):
-- List every distinct starting configuration (class, faction, disguise, build, loadout).
-- For each, trace the COMPLETE path from game start to win condition: every required location, item, action, and progression threshold.
-- Confirm each step in the win path is accessible from this starting configuration. Do not assume — verify.
-- If any starting configuration lacks a clear, confirmed path to the win condition: that configuration is a trap. Fix it before delivery. "I think they can find a way" is not sufficient.
-
-**Acquisition ordering test** (required if game has gated content):
-- List every item, location, or action gated behind a prerequisite (an intel piece, a key, an unlock, a phase threshold).
-- For each: simulate the natural exploration order (player reaches the gated location BEFORE acquiring the prerequisite, then later acquires the prerequisite). Is the content now accessible? Or is the player permanently locked out because they visited too early?
-- Natural play visits locations in any order. Never assume the player will discover the prerequisite before finding the gated content. Fix: make gated content (re-)accessible after the prerequisite is acquired, regardless of when the location was first visited.
+**Reward diversity check** (required):
+- List every type of reward. If all rewards reduce to a single metric, add at minimum two qualitatively distinct types: one that opens access to new content, and one that provides recognition at milestone moments.
+- Milestone rewards must be explicitly acknowledged as named moments — not just stat changes. "Day 8: First net-positive day. The store turns a corner." is a milestone. "Net +$47. Day ends." is not.
 
 **End-state accuracy check** (required):
-- Identify the primary win/lose condition (the thing that most determines whether the player "succeeded" or "failed").
-- Verify that your game-over screen, final grade, and outcome text are gated on this condition first. A player who met the bankruptcy/death/elimination condition must receive a failure outcome — not a "thriving" rating because a secondary metric (style points, reputation, bonus score) was high.
-- Score formulas that weight secondary metrics above primary outcomes are bugs in the evaluation logic, not design decisions. Check your formula: if a player failed the primary condition, can they receive a passing grade from secondary metrics? If yes, fix the formula.
+- Verify that your game-over screen and final grade are gated on the primary win/lose condition first. A player who met the failure condition must receive a failure outcome — not a passing grade because a secondary metric was high.
 
 ---
 
@@ -253,6 +232,8 @@ The player's core activity must be making decisions, not navigating menus. A dec
 
 If the player is mostly selecting from static numbered lists where the same option is always best, the game has failed at its primary job.
 
+Different players should be able to develop different playstyles — a pacifist path, a combat-focused path, a merchant path — that are mechanically distinct, not just narratively different. The game should support at least two structurally different approaches to its core challenge. If every player who succeeds follows the same sequence of actions, there is only one real strategy regardless of how many menu options exist.
+
 ### The World Is Consistent
 
 Rules apply uniformly. The same action in the same circumstances always produces the same type of outcome. The player should be able to reason about the game world and have their reasoning rewarded. When two rules interact in a new situation, the outcome should follow logically from each rule's individual behavior.
@@ -278,6 +259,9 @@ A game that outputs only mechanical readouts — "+3 food," "Trust: 20→31," "H
 - Phase transitions and major events must include atmospheric description. Not just "Phase 2 begins" but what the world looks, sounds, or feels like in this new situation.
 - Use no fourth-wall language: "press N to continue," "select option 3," "click here to confirm." The player is in the world, not outside it.
 - Character responses to events must be individual, not templated. Different characters react differently to the same hardship. A template with a name substituted is not characterization.
+- Describe what exists, not what the character feels. "A chill runs down your spine" is telling the player what to feel. "The corridor narrows, and the light doesn't reach the end" is showing the world and letting the player feel for themselves.
+
+**Theme-mechanic alignment:** The game's mechanics should reflect its theme. A survival game's core loop should feel like survival — scarcity, danger, tough choices. A political intrigue game should have mechanics that feel like political maneuvering — alliances, leverage, hidden agendas. If you stripped the flavor text, the mechanics alone should communicate what the game is about. When theme and mechanics pull in different directions, the game feels hollow.
 
 **Systems-heavy games face a specific narrative failure mode**: the output becomes a stream of stat changes with no world present. "Revenue: +$342. Reputation: -2. Employee leveled up." is a system report, not a game experience. Fix:
 - Every event must include at least one sentence of sensory or social content that situates the player in a real situation before reporting the numbers. The world exists first; the mechanical consequence follows.
@@ -345,6 +329,8 @@ A game that cannot measure player performance cannot teach mastery. Players impr
 
 **Track the player's improvement signal.** If a player does something skilled (executes a setup, exploits a weakness, manages a resource under pressure), acknowledge it with specific feedback: not "you won" but "you won in 8 turns — the par is 14." This tells skilled players their skill mattered.
 
+**Harder challenges must yield proportionally greater rewards.** The game should never reward trivial actions with significant gains — reward magnitude must correlate with difficulty and risk. A player who overcame a difficult encounter should receive more than a player who completed an easy one. If the most rewarding strategy is to repeatedly complete the easiest task, the reward structure is broken.
+
 ### The World Acts Without You
 
 A simulation that freezes when the player looks away is not a simulation — it is a stage set. Other actors in the world must pursue their own goals using the same systems the player uses, whether or not the player interacts with them.
@@ -354,6 +340,12 @@ A simulation that freezes when the player looks away is not a simulation — it 
 **NPC goals are specific and traceable.** Every significant NPC or faction has a named objective (control N seats, eliminate rival X, pass policy Y) that shapes their decisions. Players should be able to observe NPC behavior and infer their goals — and then either exploit or counter those goals.
 
 **The world diverges without player input.** If the player takes no action for 3 turns, the game state should change noticeably as a result of other actors' decisions. If it doesn't, the world is a backdrop, not a simulation.
+
+### Overlapping Timelines
+
+The game must always have at least one process in motion whose resolution the player is waiting for, plus at least one unanswered question the player could investigate. When one process resolves, another must already be underway. If the player completes an action and has nothing pending, nothing brewing, and nothing they're curious about, the game has lost momentum.
+
+This is what drives "one more turn" compulsion: the player wants to see what happens next with the thing already in motion, and while waiting they start a new thing they'll want to see through. Design overlapping timelines explicitly — short-term actions that resolve in 1-3 turns, medium-term investments that resolve in 5-10 turns, and long-term campaigns whose outcome is uncertain until the endgame. At any given moment, the player should have stakes at multiple timescales.
 
 ---
 
@@ -381,6 +373,7 @@ These are specific patterns that ruin games. Check your design against each one.
 - **Do not default to three generic resources** (gold/wood/stone). If you have resources, each must serve a qualitatively different purpose with unique mechanics (one decays, one is shared, one is spatial, etc.).
 - **Do not allow infinite accumulation.** Resources need sinks, caps, decay, or maintenance costs. If the player can hoard without penalty, there are no timing decisions.
 - **Every resource must create a spending dilemma.** If there's nothing meaningful to choose between, the resource is just a counter, not a game mechanic.
+- **If your game has morale, happiness, or satisfaction, do not model it as a single 0-100 number.** Use at least two interacting dimensions (e.g., safety vs. freedom, material comfort vs. social belonging, individual happiness vs. group cohesion). A single scalar collapses all interesting tension into one optimization target.
 
 **Every spendable resource must have at least one of the following:**
 - A hard cap at a strategically meaningful maximum (state the cap in a code comment and justify it: "max food = 20: party of 4 × 5 days of buffer")
@@ -409,6 +402,7 @@ These are specific patterns that ruin games. Check your design against each one.
 - **Phase gates must have progress indicators.** Every phase transition requirement must be visible to the player as a progress indicator BEFORE the gate triggers. If Phase 2 requires two conditions, both must appear as labeled progress bars or numbers during normal play (e.g., "Phase 2: Rep 38/40, Revenue $4,200/$6,000"). Revealing requirements only in the transition announcement is too late — the player needed that information to pursue the goal.
 - **Quantify benefits before asking players to commit.** Every irreversible or costly decision must show the actual numerical effect — not a description — before the player confirms. "This upgrade improves service quality" is not sufficient for a $500 irreversible purchase. "This upgrade increases customer draw by +8% (45% to 53%)" is sufficient. The player must be able to compute the tradeoff.
 - **Messages must match implementation timing.** Every message that describes when an effect applies ("visible tomorrow," "takes effect immediately," "activates next turn") must accurately describe when the effect is actually processed in your code. Verify each such message against the implementation. A message that says "tomorrow" when the code applies it today teaches the player a false model of the game.
+- **Output length should scale with event importance.** Walking to an adjacent room gets a sentence. Discovering a critical secret gets a paragraph. A routine purchase gets a confirmation line. Winning a climactic battle gets a full scene. Uniform-length output regardless of significance makes everything feel equally unimportant.
 
 ### World
 
@@ -417,6 +411,7 @@ These are specific patterns that ruin games. Check your design against each one.
 - **The world should operate autonomously.** Events, NPC behaviors, and system dynamics should continue whether or not the player is involved. The player is one actor in a living world, not the center of a theme park.
 - **Random events must offer decisions.** "A flood! -20 food" is not gameplay. "A flood threatens the southern fields. Divert workers to build levees (lose production) or evacuate crops (save some, lose the fields)?" is gameplay.
 - **Scripted and random events must check the world state they describe.** An event that describes an opponent as desperate must verify the opponent is actually in a desperate state before firing. An event that describes a competitor cutting prices must check that the competitor is in a pricing-aggressive behavioral mode. Events that fire regardless of whether their described state is true produce contradictory information — the player reads one thing in the narrative and sees the opposite in the game state. This destroys world coherence and makes the narrative untrustworthy. For every event in your pool, write the specific world-state predicate it checks before being eligible to fire.
+- **Every noun mentioned in a location or scene description must be interactable.** If you describe a glowing console, the player must be able to examine or use it. If you describe a locked door, the player must be able to try to open it. Descriptions that mention objects the player cannot interact with train the player to ignore your descriptions — which means they'll also ignore the interactive objects you do want them to notice.
 
 **If the game has AI opponents, rivals, or NPCs that interact with the player:**
 - They must pursue goals using the same systems the player uses — no special AI-only rules or exemptions.
@@ -457,3 +452,28 @@ This audit takes 10 minutes and eliminates the most common failure that produces
 - **Test for unwinnable states.** Can the player reach a dead end where progress is impossible but the game doesn't recognize it? If yes, fix it — either prevent the state or detect and handle it.
 - **Include negative feedback loops.** If winning begets more winning without limit, the first player to pull ahead wins every time. Include catch-up mechanics or diminishing returns on advantage. **Design and name a specific catch-up mechanism before writing code.** Examples: the AI opponent scales aggression with player success; high-score players face new threats not present at lower scores; leading metrics trigger counter-pressure events; dominant resource positions attract new competitors or costs. A game where sustained success requires no more effort or attention than mediocre performance has no tension in its winning state.
 - **Difficulty must change strategy, not just numbers.** If your game offers difficulty settings or scaling, each level must make at least one previously viable strategy non-viable or open at least one strategy not available at other levels. Changing only starting resources or error tolerance — where all difficulty levels produce the same optimal decisions with different margins — creates runs that feel identical with different runway lengths. True difficulty variation forces the player to think differently, not just have more buffer.
+
+### Interface & Usability
+
+- **Do not build the game around numbered menus as the sole interaction mode.** If >80% of player interactions are selecting a number from a static list, the interface has failed. Use contextual commands, abbreviations, state-dependent menus, or free-text input with synonym recognition. The interface should feel like interacting with a world, not navigating a phone tree.
+- **Common actions must be fast.** The player's most frequent action should require 1-2 keystrokes. If the player types more than 3 characters for something they do every turn, add a shortcut or alias.
+- **Include a help command.** At any point, the player should be able to type `help` (or `?` or `h`) and see what actions are available in the current context. Do not make the player memorize commands — but do not dump all possible commands regardless of context either. Show what's relevant now.
+- **Automate sequences that involve no decisions.** If the player must press Enter 5 times to advance through text with no choices between screens, collapse it into one screen. "Press any key to continue" between every screen is not pacing — it is tedium.
+- **Communicate the persistence model.** If the game has permadeath, say so. If it auto-saves, say when. If the player can save manually, make the command obvious. An ambiguous persistence model causes anxiety that overrides engagement.
+
+### Visual Representation
+
+- **If the game involves spatial decisions (navigation, positioning, layout, adjacency, line-of-sight), it MUST provide a visual map or grid.** Describing spatial relationships in text alone when a map would work is a design failure. Even a simple ASCII grid communicates spatial information faster and more accurately than paragraphs of directional prose.
+- **Use visual gauges for quantities the player monitors.** `[########..] 80%` communicates faster than `HP: 80/100`. Resources, health, progress, morale — any value that changes frequently and matters for decisions should have a compact visual representation alongside or instead of raw numbers.
+- **Symbol consistency.** If `#` means wall in one room, it means wall everywhere. If `@` is the player, it is always the player. Do not reuse symbols for different meanings without clear contextual separation (different display modes or labeled sections).
+- **ASCII art must communicate information, not just decorate.** A 15-line ASCII title card that pushes game content off the visible screen is anti-design. Every visual element must earn its screen real estate by conveying something the player needs. Decorative borders, elaborate frames, and ornamental dividers that compress actual game information are worse than whitespace.
+- **Do not attempt photorealistic ASCII art.** Semi-abstract representations that suggest form (`/\` for a mountain, `~` for water, `T` for a tree) work better than dense character art that resolves into visual noise at terminal scale.
+
+### Code Architecture
+
+- **Define game entities in data structures, not inline in logic.** Items, enemies, abilities, events, and dialogue should live in dictionaries, config tables, or data files — not as if-else chains in the game loop. Adding a new weapon should mean adding a data entry, not editing the combat function.
+- **Separate simulation from display.** Do not put `print()` or `input()` inside functions that compute game outcomes. The simulation must be callable without producing output — this makes it testable, verifiable, and auditable. Display functions read game state and present it; simulation functions change game state and return results.
+- **Do not put all game logic in one file.** Separate systems into modules (combat, economy, AI, display, game loop). Each module should be understandable without reading the others. A single file with 80%+ of the game logic is unmaintainable and unverifiable.
+- **Use named constants for all balance values.** `FLANKING_BONUS = 1.3` is tunable and searchable. `damage *= 1.3` buried in a function is invisible. Every damage number, cost, probability, threshold, and scaling factor should be a named constant defined in one place.
+- **Include a debug mode.** The game must have a way to display the current RNG seed, manipulate game state (set resources, skip to phase, spawn specific encounters), and reproduce specific situations. Without this, testing late-game content requires playing through the entire game every time. Gate debug commands behind a flag or command prefix so they don't clutter normal play.
+- **Seed your random number generator and log the seed.** Display it at game start or in the debug output. Without reproducible randomness, bugs are unreportable ("it happened once but I can't recreate it"), balance testing is unreliable, and the auditor cannot verify specific claims about game behavior.
