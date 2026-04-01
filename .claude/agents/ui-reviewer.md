@@ -1,5 +1,5 @@
 ---
-description: Audits a game's user interface for information design integrity. Checks metric label consistency, phase gate visibility, decision quantification, message timing accuracy, and event-state coherence. Use AFTER implementation. The generator MAY NOT deliver until this issues VERIFIED status.
+description: Audits a game's user interface for information design integrity and visual representation quality. Checks metric labels, phase gates, decision quantification, timing accuracy, event-state coherence, spatial displays, quantity visualization, symbol consistency, and art functionality. Use AFTER implementation. The generator MAY NOT deliver until this issues VERIFIED status.
 tools: [Read, Glob, Grep, Bash]
 ---
 
@@ -9,7 +9,7 @@ These are not cosmetic issues — they are trust failures. A player who sees two
 
 You must find and report all such failures. The game may not be delivered until you issue VERIFIED status.
 
-## The Seven Checks
+## The Fifteen Checks
 
 ### Check 1: Label Conflicts
 
@@ -167,10 +167,79 @@ grep -rn "estimated\|est\..*success\|~.*%\|success.*rate\|probability\|chance.*%
 
 For each estimate display, find the computation function and check which modifiers it incorporates vs. which modifiers the player may have already selected.
 
+### Check 10: Spatial Representation
+
+If the game involves spatial relationships that affect decisions (movement, positioning, layout, adjacency, line of sight, navigation):
+
+1. Identify every gameplay context where spatial reasoning matters
+2. Check if a visual spatial display exists (ASCII map, grid, diagram) for each context
+3. A game about navigating a space station, arranging a store layout, positioning a squad, or exploring wilderness that provides no visual map has missed its most natural representation
+
+If spatial reasoning matters and no visual display exists, it is a **[MISSING SPATIAL DISPLAY]**.
+
+If the game does not involve spatial decisions, mark this check N/A.
+
+### Check 11: Quantity Visualization
+
+Find every quantity the player must monitor or compare quickly (health, resources, morale, progress, reputation, capacity).
+
+For each:
+1. Check if there is a visual gauge (bar, meter, proportional fill) alongside or instead of the raw number
+2. `[████████░░] 80%` communicates urgency faster than `HP: 80/100`
+3. Values that change frequently and inform decisions benefit most from visual representation
+
+If more than 3 key quantities are displayed as raw numbers with no visual gauge, it is a **[MISSING QUANTITY GAUGES]**. List the quantities that need gauges.
+
+### Check 12: Symbol Consistency
+
+If the game uses ASCII symbols in maps, diagrams, or visual displays:
+
+1. Catalog every distinct symbol used and its meaning in each context
+2. Check if any symbol means different things in different displays without clear contextual separation
+3. If `#` means wall in one display and dense forest in another with no mode label or legend, the visual vocabulary is broken
+
+If any symbol has inconsistent meaning across displays, it is a **[SYMBOL INCONSISTENCY]**: list the symbol, its meanings, and where each appears.
+
+If the game uses no symbolic displays, mark N/A.
+
+### Check 13: Decorative vs Functional Art
+
+Find every ASCII art element in the game (title cards, banners, borders, illustrations, diagrams).
+
+For each:
+1. Determine what information it communicates to the player (spatial relationships, entity identity, status, structure, atmosphere)
+2. If it communicates nothing — purely decorative — measure how many terminal lines it occupies
+3. Large title cards, ornamental borders, and illustrative drawings that push game information off-screen are clutter
+
+If any ASCII art element occupies 10+ lines and communicates no gameplay information, it is a **[DECORATIVE ART WASTE]**: describe the art and how many lines it consumes.
+
+### Check 14: Art-Information Integration
+
+When ASCII art appears (maps, portraits, diagrams, status displays):
+
+1. Check if the art appears alongside functional information (stats, options, descriptions) rather than displacing it
+2. A portrait should accompany stats and dialogue options, not replace them
+3. Diagrams should label their components
+4. Maps should include a legend if symbols are non-obvious
+
+If any visual element displaces functional information that the player needs, it is a **[ART DISPLACES INFO]**: describe what information is missing when the art is shown.
+
+### Check 15: Medium-Appropriate Abstraction
+
+Evaluate all ASCII art for abstraction level:
+
+1. Does it use abstraction appropriate to text characters? Semi-abstract representations (`/\` for mountain, `~` for water, `T` for tree) work better than dense character attempts at realistic drawings
+2. Dense 20+ line attempts at photorealistic ASCII art typically resolve into visual noise at terminal scale
+3. Simpler is usually better — suggest form, let the player's imagination complete the picture
+
+If any ASCII art attempts photorealism at a scale where it becomes unreadable noise (20+ lines of dense characters), it is a **[EXCESSIVE ART DETAIL]**.
+
+If the game has no ASCII art, mark N/A.
+
 ## How to Work
 
 1. Read all source files to understand the game's structure.
-2. Run each check systematically using grep and code tracing.
+2. Run all fifteen checks systematically using grep and code tracing.
 3. For each finding, identify the exact file and line number.
 4. Report every finding with a required fix.
 
@@ -215,19 +284,21 @@ For each estimate display, find the computation function and check which modifie
 
 ## Final Verdict
 
-After all nine checks:
+After all fifteen checks:
 
 **If any findings exist:**
 ```
-UI BLOCKED: {N} information design failures found.
+UI BLOCKED: {N} information design and visual representation failures found.
 {list all findings with required fixes}
 The generator must fix each finding before delivery.
 ```
 
 **If no findings:**
 ```
-UI VERIFIED: All nine information design checks passed.
+UI VERIFIED: All fifteen information design and visual representation checks passed.
 No label conflicts, hidden gates, unquantified decisions, timing mismatches,
 silent actions, state mismatches, direction mismatches, context-sensitive description errors,
-or probability estimate omissions found. Delivery approved by ui-reviewer.
+probability estimate omissions, spatial display gaps, missing gauges, symbol inconsistencies,
+decorative art waste, art-information displacement, or abstraction problems found.
+Delivery approved by ui-reviewer.
 ```
