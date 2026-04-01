@@ -32,193 +32,169 @@ To spawn an agent, use the Agent tool with the agent name as the subagent_type o
 
 ---
 
-## Design Process
+## Development Philosophy
 
-### Phase 1: Systems Design
+**This is not a factory pipeline.** You are not executing a sequence of phases that each produce a finished artifact. You are running a continuous development loop that converges on a good game.
 
-Before writing code, design the game's systems (write your design to `GAME_OUTPUT_DIR/design-notes.md`). Answer:
+**Core principles:**
 
-1. **What is the core mechanic?** Name the single mechanic everything else orbits. Every other system should support, complicate, or create tension with this mechanic. If you cannot name one, the design lacks focus — simplify until you can.
-2. **What are the core systems?** List every distinct system (e.g., combat, economy, movement, faction relations). For each, describe what state it tracks and what decisions it creates for the player.
-3. **How do systems interact?** For every pair of systems, identify at least one interaction. If two systems don't interact, one of them probably shouldn't exist. Cut systems that don't connect.
-4. **What does a turn look like?** Describe the player's action loop — what information do they see, what choices do they have, what happens after they choose?
-5. **What creates tension?** Identify the sources of pressure, scarcity, or conflict that make decisions difficult. A game without tension is a spreadsheet.
-6. **What varies between playthroughs?** Identify what changes across runs — starting conditions, procedural generation, branching consequences, player strategy. **At least 4 substantive content elements** (encounter configurations, event sequences, NPC attributes, resource distributions, terrain compositions) must be randomly drawn from a pool each run. The pool must be at least 1.5x the needed content for each variable slot. A player who has finished 3 runs should still encounter genuinely new situations on their 4th. Variation must be tactical, not cosmetic — different starting conditions should demand different strategies. Include at least one optional harder victory condition for skilled players beyond the baseline win.
-7. **What are the game's phases?** Design systems whose equilibria shift naturally over the course of play. Early game should feel different from mid and late game because resource depletion shifts priorities, capability accumulation opens new strategies, and environmental pressure changes the viable action space — not because scripted triggers change the rules. If your game has a setup phase, the remaining run must introduce genuinely new decision types the player wasn't facing in setup.
-8. **What doesn't the player know?** List at least three things the player must actively discover, infer, or investigate — things NOT displayed by default. At least one important variable must be genuinely uncertain for 5+ turns — not just hidden-until-investigated, but unknowable through any single observation. The player must commit decisions without knowing it precisely. Hidden information must have discovery mechanisms — a way to learn it if you invest in finding out.
-9. **What are the player's goals at each timescale?** Name an immediate goal (this turn), a short-term goal (next 5-10 turns), and a long-term goal (whole game). Identify at least one pair of goals that conflict — pursuing one sacrifices progress toward the other. If all goals point the same direction, the game has no trade-offs.
+1. **Every artifact is a hypothesis.** The design doc, the tooling plan, the architecture, the balance numbers — all are working guesses that implementation and play will test. When evidence contradicts an artifact, update the artifact. Never defend a document against observed reality.
 
-**Continuation criterion:** `design-notes.md` written with all 9 questions answered concretely.
+2. **The unit of progress is a validated improvement.** Not "design doc exists" or "Phase 3 complete." Progress means the game is measurably better than it was: deeper, more engaging, more robust, better balanced. If you completed a phase but the game isn't better, you accomplished nothing.
 
-### Phase 2: Tooling & Infrastructure
+3. **Implementation is research.** Writing code reveals design truth. You will discover things during implementation that invalidate design assumptions. This is normal and expected — it means the process is working. Update the design when this happens.
 
-Before building the game itself, build the tools that make everything else easier. **Do not start implementing game systems until this phase is complete.**
+4. **Work on the weakest thing.** At each decision point, ask: *what would the auditor score lowest right now?* Attack that, not the next item in a checklist.
 
-First, ask two questions about your specific design:
+5. **Verification is diagnosis, not permission.** A BLOCKED finding is not "you failed the gate." It is information about where the game needs work. Every finding must be classified by root cause — is this a design flaw, a code bug, a tooling gap, or a tuning issue? The fix flows to the root cause, not to the symptom.
 
-1. **What tools does this game need?** Read your design notes and for each system, ask: *how will I test this in isolation? How will I verify it works at scale? How will I reach late-game states without playing through the whole game?* A combat game might need an arena mode to test specific matchups. A store sim might need a customer flow simulator. A political sim might need a faction state inspector. Write the answers to `GAME_OUTPUT_DIR/tooling-plan.md`.
+6. **Every change is guilty until proven innocent.** After any change, verify it didn't degrade what was already working. Quality ratchets forward — once something works well, protect it.
 
-2. **What architectural decisions make implementation easier?** Before writing game code, decide: what is the data model? What are the module boundaries? What interfaces connect systems? Answering this now prevents expensive refactoring later.
+7. **Tooling and infrastructure evolve with the game.** Building tools is not a one-time setup phase. When you discover a new debugging need, testing gap, or verification difficulty, improve the tooling immediately. Tooling quality is development speed, and development speed is game quality.
 
-Then build the baseline infrastructure every game needs:
+---
 
-- **Debug mode** with a command prefix or flag that enables: jump to any game state, set any resource value, spawn specific encounters/events, advance time, trigger phase transitions, view internal state (AI decisions, hidden variables, probability calculations).
-- **Seeded RNG** — accept and log a random seed. Same seed + same inputs = same game. Display the seed at game start.
-- **Headless simulation mode** — the game's simulation logic must be callable without display or input, so automated tests can run thousands of scenarios. This means simulation functions return results without printing; display is a separate layer that reads game state.
+## Development Process
 
-Then build any concept-specific tools you identified in question 1.
+The process has two stages: **bootstrap** (get from nothing to a playable core loop) and the **development loop** (iteratively improve until the game is as good as it can be). Bootstrap is short. The development loop is where the game is actually built.
 
-These tools pay for themselves immediately: the balance-checker needs headless mode, the play-tester needs reproducible seeds, and you need debug mode to test late-game content without playing through the entire game.
+### Bootstrap
 
-**Continuation criterion:** Debug mode works (can set state, jump to specific situations). RNG is seeded and logged. Simulation functions can run without display. Concept-specific tools from question 1 are operational.
+Bootstrap gets you from nothing to a first playable build. It runs once.
 
-### Phase 3: Implementation
+#### Step 1: Initial Design Hypothesis
 
-Build the game on top of the infrastructure from Phase 2.
+Write your initial design to `GAME_OUTPUT_DIR/game-model.md`. This is a **working hypothesis** — it will change as you learn. Structure it with these sections:
 
-- **Implement the highest-risk system first** — the one most likely to fail, require rethinking, or force changes to other systems. Easy systems built on top of a risky foundation may need to be scrapped; risky systems built first reveal design problems early.
-- **Before implementing each system, ask: does existing code need to change first?** If the economy system hardcodes resource types inline and you're about to add a fourth resource, first generalize the resource system to be data-driven, then add the new resource. If AI behavior is written as a single function and you need two behavioral modes, first extract the mode-switching infrastructure, then implement the modes. The question is not "can I wedge this in?" but "is the codebase ready to receive this cleanly?" If not, prepare the codebase first.
-- Build the gameplay loop before anything else. No title screens, settings menus, or character creation wizards until the core loop works and is interesting.
-- Every system must be fully implemented or not present at all. A system with code but missing functionality (crafting recipes with no ingredient gathering, a diplomacy menu with one option) is worse than no system.
-- Use the system-implementer agent to build multiple systems in parallel. Give it clear interface contracts.
-- Use whatever language, libraries, and architecture serve the concept. External packages are fine if they add genuine value. If you install packages, do it in your code or in `run.sh`.
+**Current design** — answer these 9 questions:
+1. **What is the core mechanic?** Name the single mechanic everything else orbits.
+2. **What are the core systems?** List each system, its state, and the decisions it creates.
+3. **How do systems interact?** For every pair, identify at least one interaction. Cut systems that don't connect.
+4. **What does a turn look like?** The action loop — information, choices, consequences.
+5. **What creates tension?** Sources of pressure, scarcity, or conflict.
+6. **What varies between playthroughs?** At least 4 substantive content elements drawn randomly from pools at least 1.5x the needed size. Variation must be tactical — different starts demand different strategies. Include an optional harder victory condition.
+7. **What are the game's phases?** Design systems whose equilibria shift naturally. Not scripted triggers — resource depletion, capability accumulation, environmental pressure changing the viable action space.
+8. **What doesn't the player know?** At least three things requiring active discovery. At least one genuinely uncertain variable for 5+ turns.
+9. **What are the player's goals at each timescale?** Immediate, short-term, long-term. At least one conflicting pair.
 
-After all systems are connected, **smoke-test the game** — launch it via tmux, play 3-5 turns, confirm the core loop works and doesn't crash. This is not a full play-test; it is a quick sanity check before sending the game through the verification pipeline.
+**Open questions** — things you're unsure about. These are expected to exist and expected to shrink over time.
 
-**Continuation criterion:** Core gameplay loop works. All designed systems are implemented and connected. Smoke test passes (game launches, core loop runs, no crashes in 3-5 turns).
+**Assumptions under test** — design decisions you believe are correct but haven't verified yet.
 
-### Phase 4: Verification Pipeline
+#### Step 2: Tooling & Infrastructure
 
-Run verification agents to catch bugs, design flaws, and information integrity failures. Fix all findings and re-verify as needed. **All seven agents must issue VERIFIED before you proceed.**
+Before building the game, build what makes building easier.
 
-**Wave 1 — Code correctness** (run in parallel):
-- **dispatch-verifier** — catches silent fallthroughs where player actions execute wrong code
-- **simulation-verifier** — catches orphaned mechanics (state written but never read in outcomes)
-- **code-architecture-reviewer** — catches structural anti-patterns (print in simulation, monolithic files, magic numbers, missing debug mode)
+1. **What tools does this game need?** For each system: how will you test it in isolation? Verify at scale? Reach late-game states without playing through? Write answers to `GAME_OUTPUT_DIR/tooling-plan.md`.
+2. **What architectural decisions make implementation easier?** Data model, module boundaries, system interfaces.
 
-Fix all findings. These are code bugs, not opinions.
+Build baseline infrastructure:
+- **Debug mode** — jump to any state, set any value, spawn events, view internals. Gate behind a flag.
+- **Seeded RNG** — accept and log a seed. Same seed + same inputs = same game.
+- **Headless simulation** — simulation callable without display or input.
 
-**Wave 2 — Design & information integrity** (run in parallel, after Wave 1 fixes):
-- **design-reviewer** — catches structural design problems: isolated systems, fake decisions, scripted phases, missing uncertainty, weak goals, theme-mechanic mismatch
-- **ui-reviewer** — catches information design and visual representation failures: label conflicts, hidden gates, unquantified decisions, missing spatial displays, symbol inconsistency
+Build concept-specific tools from question 1.
 
-Fix all findings. If design fixes required significant code changes, re-run Wave 1.
+#### Step 3: First Playable
 
-**Wave 3 — Balance & experience** (run in parallel, after Wave 2 fixes):
-- **balance-checker** — stress-tests game math with automated scenarios
-- **experience-reviewer** — plays the game and evaluates learning curve, engagement, motivation, pacing
+Build the core gameplay loop and all designed systems.
 
-Fix all findings. Re-run the specific agent after fixes — an unverified fix has unknown outcome.
+- **Implement the highest-risk system first** — the one most likely to fail or force rethinking. Risky systems built first reveal design problems early.
+- **Before each system, ask: does existing code need to change first?** If the economy hardcodes resource types and you're adding a fourth, generalize it first. If AI is a single function and you need behavioral modes, extract the infrastructure first. The question is "is the codebase ready to receive this cleanly?"
+- Build the gameplay loop before chrome (title screens, settings, character creation).
+- Every system must be fully implemented or absent.
+- Use **system-implementer** to build systems in parallel with clear interface contracts.
 
-**Continuation criterion:** ALL SEVEN agents have issued VERIFIED status.
+Smoke-test: launch via tmux, play 3-5 turns, confirm no crashes.
 
-### Phase 5: Play-Testing
+**When design assumptions break during implementation** — and they will — update `game-model.md`. Move the broken assumption to a "superseded" section with a note on what you learned. This is progress, not failure.
 
-**You must play your own game.** Not run a script — actually play it, one turn at a time, reading output and deciding what to do next. The game has now been verified — play-testing focuses on experiential quality and identifying enhancements.
+### Development Loop
 
-**Piping pre-scripted inputs is BANNED.** Every command must be decided AFTER reading the game's previous output.
+After bootstrap, you have a playable but unverified game. The development loop now runs repeatedly until the game converges on quality. **This is the core of the process.** Each cycle:
 
-#### How to play your game
+```
+assess → prepare → implement → verify → play → propose next cycle
+```
 
-Start it in a tmux session so you can interact turn-by-turn:
+#### 1. Assess
+
+Ask: **what is currently weakest?** Read `game-model.md`'s open questions and assumptions under test. Consider what the auditor would score lowest. Name the target: a design risk, a gameplay weakness, a UX problem, a balance issue, a tooling gap, a missing feature.
+
+If this is the first cycle after bootstrap, the target is "get the core game through verification."
+
+#### 2. Prepare
+
+Before implementing anything:
+
+**System readiness** — Does existing code need restructuring to receive this change cleanly? Generalize, abstract, or modularize first.
+
+**Tooling readiness** — What tools or debug capabilities would make this easier to build and verify? Build them first.
+
+**Design check** — Does `game-model.md` need updating to reflect what you've learned? Update it now. Move invalidated assumptions to "superseded." Add new open questions.
+
+#### 3. Implement
+
+Build the change. It must integrate with existing systems, not bolt on as an isolated addition.
+
+#### 4. Verify
+
+Run verification agents. Fix findings. Re-verify.
+
+**Wave 1 — Code correctness** (parallel):
+- **dispatch-verifier**, **simulation-verifier**, **code-architecture-reviewer**
+
+**Wave 2 — Design & information integrity** (parallel, after Wave 1 fixes):
+- **design-reviewer**, **ui-reviewer**
+
+**Wave 3 — Balance & experience** (parallel, after Wave 2 fixes):
+- **balance-checker**, **experience-reviewer**
+
+**For each finding, classify its root cause:**
+- **Design flaw** — the fix is in `game-model.md` and the systems it describes, not just the code
+- **Code bug** — the fix is in the implementation
+- **Tooling gap** — the fix is better debug/test infrastructure
+- **Tuning issue** — the fix is adjusting balance numbers
+
+Route the fix to the root cause. A balance-checker finding that's actually a design flaw should change the design, not just patch numbers. **Update `game-model.md` whenever a finding reveals that the design was wrong.**
+
+Repeat until ALL SEVEN agents issue VERIFIED.
+
+#### 5. Play
+
+Play the game via tmux. At least two sessions with different strategies. Each command decided after reading the previous output.
 
 ```bash
 tmux kill-session -t game 2>/dev/null
 tmux new-session -d -s game -x 120 -y 40 'cd GAME_OUTPUT_DIR && python3 -u game.py'
 sleep 1
 ```
-
-Read the initial output:
 ```bash
 tmux capture-pane -t game -p
 ```
-
-Interact one turn at a time — each is a **separate bash call** with you reading and thinking in between:
 ```bash
 tmux send-keys -t game 'your command' Enter
 ```
 ```bash
 sleep 1 && tmux capture-pane -t game -p
 ```
-
-Play at least two sessions making different choices. Clean up when done:
 ```bash
 tmux kill-session -t game 2>/dev/null
 ```
 
-#### What to observe during play
+Observe: what is weakest? What surprised you? What would deepen the experience?
 
-- Does it start without errors? Does unexpected input crash or get handled?
-- Is there an interesting decision within the first 2 minutes?
-- Do different choices lead to observably different outcomes?
-- Is there always something pending that pulls you forward?
-- Does the mid-game feel different from the early game?
-- Are there moments that surprised you?
-- What would make this deeper, more engaging, more ambitious?
+#### 6. Propose Next Cycle
 
-**Continuation criterion:** Played 2+ sessions. No crashes or dead ends. Observations recorded.
+List 3-5 candidates for the next improvement in `GAME_OUTPUT_DIR/enhancements.md`. For each, one line explaining which dimension it deepens: strategic depth, replayability, systemic leverage, content breadth, player expression, pacing, or clarity. Candidates must be substantive — new system interactions, richer decision spaces, new phases, new uncertainty sources, AI behavioral modes, visual displays, recovery mechanics. Cosmetic-only changes do not count.
 
-### Phase 6: Enhancement Loop
+Select the candidate that most deepens the game. Return to step 1.
 
-The game is now correct and verified. The goal is not "technically correct" — it is **ambitious**. After play-testing, actively seek enhancements that deepen the experience. Cosmetic-only enhancements (renaming, reformatting, flavor text) do not count.
+**Exit condition:** Two consecutive rounds where no candidate would meaningfully improve the experience. In the final round, record rejection reasons for each candidate.
 
-This is a nested loop:
+### Delivery
 
-```
-while worthy_enhancement_exists:
-    propose 3-5 enhancement candidates
-    score each on: depth, replayability, systemic leverage, player expression
-    select highest-scoring candidate
-    produce Tooling Delta
-    implement tooling changes (if any)
-    implement enhancement
-    while not all_verifiers_VERIFIED:
-        run full verification pipeline (Phase 4)
-        fix blocking findings
-        re-run blocked agents
-    play-test the enhanced game
-    record what changed in enhancements.md
-```
-
-#### Step by step:
-
-1. **Propose candidates**: List 3-5 enhancement candidates in `GAME_OUTPUT_DIR/enhancements.md`. For each, write a one-line rationale explaining which dimension it deepens: strategic depth, replayability, systemic leverage, content breadth, player expression, pacing, or clarity. Enhancements must be substantive — new system interactions, richer decision spaces, new phases, new uncertainty sources, AI behavioral modes, visual displays, recovery mechanics. Not renaming or polish.
-
-2. **Select**: Choose the candidate that most deepens the game. If no candidate would meaningfully improve the experience, record why for each and proceed to step 7.
-
-3. **Preparation**: Before implementing, answer two questions in `enhancements.md`:
-
-   **System readiness** — Is the existing codebase structured to receive this change cleanly?
-   - What existing systems does this enhancement touch?
-   - Do those systems need to be generalized, abstracted, or restructured first? (e.g., hardcoded logic that needs to become data-driven, inline behavior that needs to become modular, a single-case implementation that needs to support multiple cases)
-   - If preparation is needed, do it before implementing the enhancement.
-
-   **Tooling readiness** — What tools make this enhancement easier to build and verify?
-   - What failure modes are most likely?
-   - What evidence would let a verifier prove it works?
-   - What new debug command, simulation capability, or test support is needed?
-   - If no tooling change is needed, why not?
-
-   **Do not begin implementation until both questions are answered.** Do system preparation and tooling changes first.
-
-4. **Implement**: Build the enhancement. It must integrate with existing systems, not bolt on as an isolated addition.
-
-5. **Inner loop — verify until all pass**:
-   - Run the full verification pipeline (Phase 4) — all 7 agents, all 3 waves.
-   - If any agent issues BLOCKED, fix the findings and re-run that agent.
-   - Repeat until ALL SEVEN agents issue VERIFIED.
-
-6. **Play-test**: Play the enhanced game via tmux. Specifically exercise the new feature. Record observations.
-
-7. **Loop or exit**: Return to step 1 to propose the next round of candidates. **Exit requires two consecutive rounds where no candidate is worth implementing** — not just one. In the final round, record rejection reasons for each candidate.
-
-**Continuation criterion:** At least one enhancement cycle completed. Two consecutive rounds with no worthy candidate before stopping. All agents VERIFIED after final enhancement.
-
-### Phase 7: Final Polish
-
-Perform the **mandatory pre-delivery checklist**, then re-run the full verification pipeline one final time.
-
-The checklist items below require your own judgment — they are not delegated to agents. After the checklist passes, run the Phase 4 verification pipeline again to confirm no regressions from polish changes. All seven agents must issue VERIFIED. If any agent blocks, fix and re-verify before delivery.
+When the development loop exits, perform the **mandatory pre-delivery checklist** (your own judgment, not agents), then run the full verification pipeline one final time. All seven agents must issue VERIFIED. If any blocks, fix and re-verify.
 
 #### Pre-Delivery Checklist
 
