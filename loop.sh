@@ -145,7 +145,7 @@ if [[ $(completed_iterations) -eq 0 && "$SKIP_TO" != "loop" ]]; then
     log "  Baseline Run"
     log "========================================"
 
-    CONCEPT=1
+    CONCEPT=0
 
     if [[ "$SKIP_TO" == "audit" || "$SKIP_TO" == "evaluate" ]]; then
         log "  Skipping generation (--skip-to $SKIP_TO)"
@@ -246,7 +246,7 @@ fi
 shuffle_concepts() {
     local n
     n=$(grep -c '^## Prompt [0-9]*:' "$SCRIPT_DIR/test-prompts.md")
-    shuf -i 1-"$n" -n "$n"
+    shuf -i 0-"$((n - 1))" -n "$n"
 }
 
 CONCEPT_ORDER=()
