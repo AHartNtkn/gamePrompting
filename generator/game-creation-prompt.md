@@ -52,6 +52,16 @@ To spawn an agent, use the Agent tool with the agent name as the subagent_type o
 
 7. **Tooling and infrastructure evolve with the game.** Building tools is not a one-time setup phase. When you discover a new debugging need, testing gap, or verification difficulty, improve the tooling immediately. Tooling quality is development speed, and development speed is game quality.
 
+8. **Passing verification does not mean the game is complete.** A game where all agents issue VERIFIED has no detectable flaws in the dimensions the agents check. It may still be shallow, unambitious, or missing depth the auditor will score. The development loop continues until the game converges on quality, not until verification passes. After every successful cycle, propose the next improvement.
+
+**The conversation is the worker. Files are the memory.** Your conversation context can be compressed at any time, losing earlier details. Do not rely on conversation memory for project state. Maintain three files in `GAME_OUTPUT_DIR/` that are the source of truth:
+
+- **`dev-status.md`** — canonical project state, overwritten each cycle (current target, agent verdicts, open issues, what's working well)
+- **`dev-log.md`** — append-only cycle history (one entry per cycle: target, changes, verification results, outcome)
+- **`failed-approaches.md`** — what didn't work and why, with conditions for retrying
+
+If your context was compressed and earlier details are missing, read these files plus `game-model.md` to reconstruct your state. Continue the development loop from the current cycle target in `dev-status.md`.
+
 ---
 
 ## Development Process
@@ -109,6 +119,11 @@ Smoke-test: launch via tmux, play 3-5 turns, confirm no crashes.
 
 **When design assumptions break during implementation** — and they will — update `game-model.md`. Move the broken assumption to a "superseded" section with a note on what you learned. This is progress, not failure.
 
+After the first playable build, create the state files:
+- **`dev-status.md`** with initial target "get core game through verification," empty agent verdicts, and a list of what's working from the smoke test.
+- **`dev-log.md`** with a "Cycle 0: Bootstrap" entry summarizing what was built.
+- **`failed-approaches.md`** (empty initially — it will accumulate as you learn).
+
 ### Development Loop
 
 After bootstrap, you have a playable but unverified game. The development loop now runs repeatedly until the game converges on quality. **This is the core of the process.** Each cycle:
@@ -119,7 +134,11 @@ assess → prepare → implement → verify → play → propose next cycle
 
 #### 1. Assess
 
-Ask: **what is currently weakest?** Read `game-model.md`'s open questions and assumptions under test. Consider what the auditor would score lowest. Name the target: a design risk, a gameplay weakness, a UX problem, a balance issue, a tooling gap, a missing feature.
+**Before planning any work, read `dev-status.md`, `dev-log.md`, and `failed-approaches.md`.** Do not plan from conversation memory alone.
+
+Ask: **what is currently weakest?** Read `game-model.md`'s open questions and assumptions under test. Check the agent verdicts in `dev-status.md`. Consider what the auditor would score lowest.
+
+**One target per cycle.** Name a single primary weakness: a design risk, a gameplay weakness, a UX problem, a balance issue, a tooling gap, or a missing feature. Multi-target cycles make attribution impossible — if something breaks, you can't tell which change caused it. Write "Cycle N: [target] because [why it's weakest]" to `dev-log.md` before writing any code.
 
 If this is the first cycle after bootstrap, the target is "get the core game through verification."
 
@@ -158,6 +177,10 @@ Run verification agents. Fix findings. Re-verify.
 
 Route the fix to the root cause. A balance-checker finding that's actually a design flaw should change the design, not just patch numbers. **Update `game-model.md` whenever a finding reveals that the design was wrong.**
 
+**Regression detection:** After running verification, compare agent verdicts to the previous cycle's verdicts in `dev-status.md`. If an agent that was previously VERIFIED is now BLOCKED, the current cycle's changes caused a regression. Investigate what broke the previously-passing check before proceeding.
+
+**Anti-oscillation:** If the same agent blocks with the same type of finding for three consecutive cycles, stop editing code. Write a deeper root-cause diagnosis to `dev-log.md` before making another change — the symptom-level fix isn't working. Record the oscillation pattern in `failed-approaches.md`.
+
 Repeat until ALL SEVEN agents issue VERIFIED.
 
 #### 5. Play
@@ -188,9 +211,18 @@ Observe: what is weakest? What surprised you? What would deepen the experience?
 
 List 3-5 candidates for the next improvement in `GAME_OUTPUT_DIR/enhancements.md`. For each, one line explaining which dimension it deepens: strategic depth, replayability, systemic leverage, content breadth, player expression, pacing, or clarity. Candidates must be substantive — new system interactions, richer decision spaces, new phases, new uncertainty sources, AI behavioral modes, visual displays, recovery mechanics. Cosmetic-only changes do not count.
 
-Select the candidate that most deepens the game. Return to step 1.
+Select the candidate that most deepens the game.
 
-**Exit condition:** Two consecutive rounds where no candidate would meaningfully improve the experience. In the final round, record rejection reasons for each candidate.
+**Before starting the next cycle**, update state files:
+- **`dev-status.md`**: Overwrite with current agent verdicts, open issues, and what's working well.
+- **`dev-log.md`**: Append this cycle's entry: what changed, what verification found, what the play-test revealed, what's next.
+- **`failed-approaches.md`**: If anything was tried and didn't work this cycle, record it with the root cause and retry conditions.
+
+Do not retry a failed approach unless the conditions in `failed-approaches.md`'s "retry only if" section are now satisfied.
+
+Return to step 1.
+
+**Exit condition:** Two consecutive rounds where no candidate would meaningfully improve the experience. "Meaningful" means a substantive change to systems, decisions, content, or player experience — not cosmetic adjustments. In the final round, record rejection reasons for each candidate.
 
 ### Delivery
 
