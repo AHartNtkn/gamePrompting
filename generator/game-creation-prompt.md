@@ -363,7 +363,11 @@ Design overlapping timelines explicitly — short-term actions (1-3 turns), medi
 
 ### Anti-Stall Pressure
 
-The game must have a mechanism that prevents indefinite stalling at comfortable difficulty. Resource drain, escalating threats, corruption, time pressure — something that forces forward into risk. A game where the optimal strategy is to wait and accumulate has no tension in its comfortable state.
+The game must ensure that turtling — staying safe in one position without engaging the world — is not the optimal strategy. Resource drain, escalating threats, corruption, environmental degradation — something that makes inaction costly enough that the player is better off engaging. A game where the optimal strategy is to wait and accumulate has no tension in its comfortable state.
+
+Turtling being *possible* is fine. The player choosing safety at a cost is a valid decision. The problem is turtling being *optimal* — when there's no reason to leave a safe position.
+
+Indefinite *play* is fine. A game that continues as long as the player is actively making decisions is not a problem — it's a feature. The anti-stall mechanism should make engagement more rewarding than inaction, not impose an artificial end point. A hunger mechanic that forces foraging is anti-stall. A hard turn limit is not anti-stall — it's an artificial constraint that ends the game regardless of whether the player is engaged. Do not implement turn limits, turn caps, or any fixed endpoint that terminates the game after N turns.
 
 ---
 

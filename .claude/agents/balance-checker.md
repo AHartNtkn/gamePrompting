@@ -24,7 +24,7 @@ You are a balance checker. Your job is to stress-test a game's mechanics by writ
 
 ## Required Tests
 
-Beyond general math probing, always run these four specific tests:
+Beyond general math probing, always run these specific tests:
 
 ### 1. Dominant Strategy Test
 Enumerate the top 3-5 distinct strategies (e.g., aggressive vs. defensive, build A vs. build B, invest early vs. invest late). Simulate each strategy for a full game session across 5+ random seeds. Report:
@@ -93,8 +93,8 @@ For each category of parallel choices the player makes (attack target types, sta
 Test whether a player can win or stall indefinitely by taking only passive/defensive actions (guard, wait, evade, retreat, stall) without engaging the game's primary offensive mechanics.
 
 **Part A — Win rate test:**
-1. Simulate a player who takes ONLY the cheapest defensive action every turn for a full encounter (or until the time limit). Never attacks, never uses primary mechanics.
-2. Measure: what is the win rate? What is the survival rate to the time limit?
+1. Simulate a player who takes ONLY the cheapest defensive action every turn for a full encounter (or 30 turns if the encounter has no natural endpoint). Never attacks, never uses primary mechanics.
+2. Measure: what is the win rate? What is the survival rate?
 3. If pure passivity wins more than 20% of encounters OR survives indefinitely with a positive expected outcome: a degenerate passive strategy exists.
 4. Report explicitly: "Passive-only strategy: survived {N}/{N} encounters for {N} rounds, {N}% resources remaining — DEGENERATE PASSIVE STRATEGY"
 
@@ -124,16 +124,6 @@ For games where the primary player action is probabilistic (attacks, hacks, pers
 
 If baseline > 80%: lower the base success rate or raise the threshold that constitutes "medium difficulty."
 
-### 10. Turn Budget Pressure Test
-
-If the game has a fixed turn limit or time budget:
-
-1. Simulate a complete run using a non-optimal but reasonable strategy: take 2 unnecessary recovery actions per 5 turns, avoid the single most efficient route, make one suboptimal choice per phase transition.
-2. Measure what fraction of the total turn budget is consumed at game end (win or loss).
-3. Report: "Non-optimal run consumed {X}% of {N}-turn budget"
-
-**Pass criteria**: A non-optimal but reasonable run must consume at least 60% of the turn budget. If < 60%: the turn limit is decorative and creates no urgency. Reduce the budget by 25–30% or increase the minimum number of turns required for each phase.
-
 ## What to Report
 
 1. **Broken formulas** — any formula that produces nonsensical values at extremes (0 damage, negative health, overflow)
@@ -146,15 +136,15 @@ If the game has a fixed turn limit or time budget:
 
 ## Final Verdict
 
-After running all 8 tests:
+After running all 9 tests:
 
-**If any critical failures exist (dominant strategy >80%, parity ratio >3x, net resource cost >= 0, passive strategy degenerate, threat self-resolves, baseline primary action success >80%, turn budget <60% consumed by non-optimal play):**
+**If any critical failures exist (dominant strategy >80%, parity ratio >3x, net resource cost >= 0, passive strategy degenerate, threat self-resolves, baseline primary action success >80%):**
 
 Report each failure with specific numbers and the required fix. State: "BALANCE BLOCKED: {N} critical balance failures found. The generator must fix every critical failure and RE-RUN the balance-checker to confirm. Fixes that are not re-verified are not accepted."
 
 **If no critical failures exist:**
 
-State: "BALANCE VERIFIED: All 8 balance tests passed. No dominant strategies, degenerate resource costs, broken parity, or passive exploits found. Delivery approved by balance-checker."
+State: "BALANCE VERIFIED: All 9 balance tests passed. No dominant strategies, degenerate resource costs, broken parity, or passive exploits found. Delivery approved by balance-checker."
 
 The game may not be delivered until this agent issues BALANCE VERIFIED status.
 After applying fixes, re-run the balance-checker to confirm the fixes resolved the problems.

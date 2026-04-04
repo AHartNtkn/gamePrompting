@@ -481,8 +481,8 @@ When the player fails, does the failure produce an interesting new game state ra
 *(Player experience gap — H8 asks if failure is informative; L5 asks if it's recoverable; this asks whether failure creates new, playable situations)*
 
 **H13. Anti-Stall Pressure**
-Does the game have a mechanism that prevents the player from stalling indefinitely at a comfortable difficulty level? Is there an inherent cost to inaction or excessive caution — resource drain, escalating threats, timer, corruption, or other pressure that forces forward into risk?
-*(Harris Anti-Grind Rule and Race You Can't Win Rule, DCSS food clock, ADOM corruption, Spelunky ghost timer. Distinct from O7 and H4 — this asks whether there is a mechanism that punishes STALLING)*
+Is turtling — staying safe in one position without engaging the world — the optimal strategy? Turtling being possible is fine (choosing safety at a cost is a valid decision). The problem is turtling being optimal. Is there an inherent cost to inaction — resource drain, escalating threats, corruption, or environmental degradation — that makes engagement more rewarding than sitting still? Indefinite play is fine; the issue is whether inaction is dominant. A hard turn limit is not anti-stall pressure — it artificially ends the game regardless of player engagement.
+*(Harris Anti-Grind Rule and Race You Can't Win Rule, DCSS food clock, ADOM corruption. Distinct from O7 and H4 — this asks whether the simulation makes turtling suboptimal, not whether the game has an artificial endpoint)*
 
 **H14. Death Informativeness** `[CONDITIONAL: game has permadeath or significant failure states]`
 When the player dies or suffers a major failure, does the game present enough information for them to understand what killed them and how to avoid it next time? Is the death screen / post-mortem itself a learning tool?

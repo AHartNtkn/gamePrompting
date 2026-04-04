@@ -38,6 +38,7 @@ Core beliefs:
 - **Depth over polish.** But unfinished mechanics are flaws — depth means *completed* depth.
 - **Mechanics first.** Plot, lore, and flavor can be layered on later. The foundation must be a system that is *fun to play*.
 - **Simulation coherence.** Rules must be consistent and predictable. Surprise should come from emergent interactions, not arbitrary events.
+- **No artificial endpoints.** Indefinite play is fine. A game that continues as long as the player is actively making decisions is not a problem. Hard turn limits and turn caps are artificial constraints that should not exist. Anti-stall pressure should make *inaction* costly (resource drain, escalating threats), not impose a timer on the game itself. Turtling being *possible* is also fine — the problem is turtling being *optimal*.
 - **Information management over information density.** Verbose descriptions are fine in context (examining an object). The player must never be overwhelmed or confused about what to pay attention to.
 - **Replayability is intrinsic.** Open-ended simulations necessarily have variety of experience as a core factor.
 - **Genre-agnostic, deontological evaluation.** Judge what the game *tried* to accomplish, mixed with universal design criteria.

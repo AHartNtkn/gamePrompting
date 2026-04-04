@@ -248,6 +248,9 @@ Check: Search for debug commands, cheat codes, console interfaces, god mode, spa
 **S72. Non-Reproducible Randomness**
 Check: Does the game set and log a random seed? Does providing the same seed produce the same game? If there's no seed system or the seed isn't logged/displayed, FAIL.
 
+**S73. Artificial Turn Limit**
+Check: Does the game end after a fixed number of turns regardless of game state? Search for conditionals that end the game based on turn count or a maximum turn number. Indefinite play is fine — the problem is artificial endpoints, not long games. If a hard turn cap exists, FAIL.
+
 ## Output Format
 
 Output your results in exactly this format:

@@ -117,12 +117,15 @@ Score 0 if failure always means game-over or full reset — the only response to
 
 ### H13. Anti-Stall Pressure (0-5)
 
-Check whether the game has a mechanism that prevents indefinite stalling at a comfortable level. Check:
-- Is there a cost to inaction — resource drain, escalating threats, timer, corruption, or environmental degradation?
-- Can the player reach a safe equilibrium and stay there indefinitely, or does the game force them forward into risk?
-- Is the pressure organic (arising from the simulation) or artificial (arbitrary timer)?
+Check whether turtling — staying safe in one position without engaging the world — is the optimal strategy. Turtling being *possible* is fine (choosing safety at a cost is a valid decision). The problem is turtling being *optimal* — no reason to leave a safe position. Check:
+- Is there a cost to inaction — resource drain, escalating threats, corruption, or environmental degradation?
+- Can the player reach a safe equilibrium where staying put is strictly better than engaging, or does the game make engagement more rewarding?
+- Is the pressure organic (arising from the simulation) or artificial (arbitrary turn limit or timer)?
+- Does the game impose a hard turn limit or turn cap? If so, this is an artificial constraint, not anti-stall pressure — it ends the game regardless of whether the player is engaged.
 
-Score 0 if the player can stall indefinitely at any comfortable difficulty level — there is no cost to inaction and no pressure to progress. Score 2 if some pressure exists but it's weak or easily circumvented. Score 4 if the game has robust anti-stall pressure that forces the player forward into risk — inaction is costly, safety is temporary, and the game rewards boldness over excessive caution.
+Indefinite *play* is not a problem. A game that continues as long as the player is actively making decisions is fine.
+
+Score 0 if turtling is optimal — the player can sit safely and there is no reason to engage. Also score 0 if the game's only anti-stall mechanism is a hard turn limit — this is an artificial endpoint, not a simulation-driven pressure. Score 2 if some organic pressure exists but it's weak or easily circumvented — turtling is suboptimal but only marginally so. Score 4 if the game makes engagement clearly more rewarding than inaction through organic simulation pressure — safety is possible but costly, and active play is the better strategy.
 
 ### H14. Death Informativeness (0-5) `[CONDITIONAL: game has permadeath or significant failure states]`
 

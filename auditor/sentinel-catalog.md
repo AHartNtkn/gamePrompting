@@ -429,6 +429,11 @@ Pattern: The game uses randomness but exposes no seed, has no way to reproduce a
 Why: Without reproducibility, bug reports are anecdotal — "it crashed sometimes" instead of "seed 42 crashes on turn 15." LLMs call `random.random()` without seeding or logging.
 Detection: Check whether the game sets and logs a random seed. Check whether providing the same seed produces the same game. If there's no seed system or the seed isn't logged/displayed, FAIL.
 
+**S73. Artificial Turn Limit**
+Pattern: The game ends after a fixed number of turns (e.g., `if turn >= 60: game_over()`) regardless of game state or player engagement. The turn cap is not a consequence of simulation dynamics — it is an arbitrary endpoint imposed on the game.
+Why: LLMs default to turn limits as the simplest way to satisfy "the game must end" and "prevent indefinite stalling." But indefinite play is fine — a game that continues as long as the player is actively making decisions has no design problem. The real anti-stall goal is making turtling suboptimal, not imposing a timer. Turn limits are artificial constraints that punish engaged players and reward passive ones equally.
+Detection: Search for conditionals that end the game based on turn count, elapsed turns, or a maximum turn number. If removing the turn limit would cause the game to have no end condition at all (because no simulation-driven win/loss/failure state exists), that is a compound failure — both S73 and S5 (No Failure State). FAIL if any hard turn cap exists.
+
 ---
 
 ## Summary
@@ -444,9 +449,9 @@ Detection: Check whether the game sets and logs a random seed. Check whether pro
 | VII. World Autopilot | 8 | Autocomplete settings/narrative |
 | VIII. Structural Autopilot | 5 | Template structures |
 | IX. Untested Gameplay | 8 | Works in code, broken in play |
-| X. Miscellaneous | 13 | Other red flags |
+| X. Miscellaneous | 14 | Other red flags |
 | XI. Code Anti-Patterns | 6 | Implementation quality |
-| **Total** | **71** | |
+| **Total** | **72** | |
 
 ### Usage Note
 
