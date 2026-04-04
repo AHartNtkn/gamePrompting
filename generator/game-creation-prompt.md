@@ -54,11 +54,11 @@ To spawn an agent, use the Agent tool with the agent name as the subagent_type o
 
 8. **Passing verification does not mean the game is complete.** A game where all agents issue VERIFIED has no detectable flaws in the dimensions the agents check. It may still be shallow, unambitious, or missing depth the auditor will score. The development loop continues until the game converges on quality, not until verification passes. After every successful cycle, propose the next improvement.
 
-**The conversation is the worker. Files are the memory.** Your conversation context can be compressed at any time, losing earlier details. Do not rely on conversation memory for project state. Maintain three files in `GAME_OUTPUT_DIR/` that are the source of truth:
+**The conversation is the worker. Files are the memory.** Your conversation context can be compressed at any time, losing earlier details. Do not rely on conversation memory for project state. **Update documentation the moment you have new information — not at phase boundaries, not at cycle end, immediately.** Anything you defer will be lost to context compaction before you get around to writing it down. Maintain three files in `GAME_OUTPUT_DIR/` that are the source of truth:
 
-- **`dev-status.md`** — canonical project state, overwritten each cycle (current target, agent verdicts, open issues, what's working well)
-- **`dev-log.md`** — append-only cycle history (one entry per cycle: target, changes, verification results, outcome)
-- **`failed-approaches.md`** — what didn't work and why, with conditions for retrying
+- **`dev-status.md`** — canonical project state (current target, agent verdicts, open issues, what's working well). Overwrite immediately when any component changes — an agent verdict, a new issue, a resolved issue.
+- **`dev-log.md`** — append-only history. Append an entry the moment something notable happens: an agent returns feedback, a fix is applied, a design assumption is invalidated. Do not batch entries — write them as they occur.
+- **`failed-approaches.md`** — what didn't work and why, with conditions for retrying. Write the entry immediately when the approach fails, not at cycle end.
 
 If your context was compressed and earlier details are missing, read these files plus `game-model.md` to reconstruct your state. Continue the development loop from the current cycle target in `dev-status.md`.
 
@@ -150,7 +150,7 @@ Before implementing anything:
 
 **Tooling readiness** — What tools or debug capabilities would make this easier to build and verify? Build them first.
 
-**Design check** — Does `game-model.md` need updating to reflect what you've learned? Update it now. Move invalidated assumptions to "superseded." Add new open questions.
+**Design check** — Read `game-model.md`. It should already be current if you've been updating it as findings come in. If anything is stale, update it now. Move invalidated assumptions to "superseded." Add new open questions.
 
 #### 3. Implement
 
@@ -175,7 +175,9 @@ Run verification agents. Fix findings. Re-verify.
 - **Tooling gap** — the fix is better debug/test infrastructure
 - **Tuning issue** — the fix is adjusting balance numbers
 
-Route the fix to the root cause. A balance-checker finding that's actually a design flaw should change the design, not just patch numbers. **Update `game-model.md` whenever a finding reveals that the design was wrong.**
+Route the fix to the root cause. A balance-checker finding that's actually a design flaw should change the design, not just patch numbers.
+
+**Immediately after each agent returns feedback:** Update `dev-status.md` with the agent's verdict. Append the feedback summary to `dev-log.md`. If any finding changes your understanding of the design, update `game-model.md` now — not after the wave, not after the cycle. The agent's feedback is context that will be lost to compaction if you defer writing it down.
 
 **Regression detection:** After running verification, compare agent verdicts to the previous cycle's verdicts in `dev-status.md`. If an agent that was previously VERIFIED is now BLOCKED, the current cycle's changes caused a regression. Investigate what broke the previously-passing check before proceeding.
 
@@ -213,10 +215,7 @@ List 3-5 candidates for the next improvement in `GAME_OUTPUT_DIR/enhancements.md
 
 Select the candidate that most deepens the game.
 
-**Before starting the next cycle**, update state files:
-- **`dev-status.md`**: Overwrite with current agent verdicts, open issues, and what's working well.
-- **`dev-log.md`**: Append this cycle's entry: what changed, what verification found, what the play-test revealed, what's next.
-- **`failed-approaches.md`**: If anything was tried and didn't work this cycle, record it with the root cause and retry conditions.
+**Before starting the next cycle**, verify state files are current. If you have been updating them immediately as instructed, they should already reflect the cycle's work. Read `dev-status.md` and `dev-log.md` to confirm they capture everything from this cycle. Fill in any gaps.
 
 Do not retry a failed approach unless the conditions in `failed-approaches.md`'s "retry only if" section are now satisfied.
 
