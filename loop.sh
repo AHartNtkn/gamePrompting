@@ -17,12 +17,14 @@ LOG_DIR="$SCRIPT_DIR/logs"
 MODEL="sonnet"
 MAX_ITERATIONS=0  # 0 = infinite
 SKIP_TO=""        # resume point: "audit", "evaluate"
+CONTINUE=false    # resume generation on existing game
 
 while [[ $# -gt 0 ]]; do
     case $1 in
         --model) MODEL="$2"; shift 2 ;;
         --iterations|-n) MAX_ITERATIONS="$2"; shift 2 ;;
         --skip-to) SKIP_TO="$2"; shift 2 ;;
+        --continue) CONTINUE=true; shift ;;
         *) echo "Unknown argument: $1" >&2; exit 1 ;;
     esac
 done
@@ -130,114 +132,12 @@ if [[ ! -f "$RESULTS" ]]; then
     log "Created results.tsv"
 fi
 
-# --- Helper ---
+# --- Helpers ---
 
 completed_iterations() {
     tail -n +2 "$RESULTS" | wc -l | tr -d ' '
 }
 
-# --- Baseline Run ---
-# On first launch (no results yet), generate + audit the current prompt
-# without modifications, so the journal has real data before the first change.
-
-if [[ $(completed_iterations) -eq 0 && "$SKIP_TO" != "loop" ]]; then
-    log "========================================"
-    log "  Baseline Run"
-    log "========================================"
-
-    CONCEPT=0
-
-    if [[ "$SKIP_TO" == "audit" || "$SKIP_TO" == "evaluate" ]]; then
-        log "  Skipping generation (--skip-to $SKIP_TO)"
-    else
-        log "  Generating baseline game for concept $CONCEPT..."
-        timeout 86400 ./generate.sh "$CONCEPT" --model "$MODEL" 2>&1 | tee run.log || true
-    fi
-
-    GAME_DIR=$(ls -dt "$SCRIPT_DIR/games"/*/ 2>/dev/null | head -1)
-    if [[ -z "$GAME_DIR" || ! -f "$GAME_DIR/run.sh" ]]; then
-        log "  ERROR: No game produced for baseline."
-        printf '%s\t%s\t%s\t%s\t%s\t%s\n' \
-            "$(git rev-parse --short HEAD)" "$CONCEPT" "0" "0" "0" "baseline: no game produced" \
-            >> "$RESULTS"
-        log ""
-    else
-        log "  Game found: $GAME_DIR"
-
-        if [[ "$SKIP_TO" == "evaluate" ]]; then
-            log "  Skipping audit (--skip-to evaluate)"
-        else
-            log "  Auditing baseline game..."
-            timeout 86400 ./audit.sh "$GAME_DIR" --model "$MODEL" 2>&1 | tee audit.log || true
-        fi
-
-        AUDIT_DIR=$(ls -dt "$SCRIPT_DIR/audits"/*/ 2>/dev/null | head -1)
-        if [[ -z "$AUDIT_DIR" || ! -f "$AUDIT_DIR/summary.txt" ]]; then
-            log "  ERROR: No audit summary found for baseline."
-            printf '%s\t%s\t%s\t%s\t%s\t%s\n' \
-                "$(git rev-parse --short HEAD)" "$CONCEPT" "0" "0" "0" "baseline: no audit summary" \
-                >> "$RESULTS"
-        else
-            SCORE=$(grep -oP 'SCORE:\s*\K[\d.]+' "$AUDIT_DIR/summary.txt" | tail -1) || SCORE="0"
-            SENTINEL_PASS=$(grep -oP 'SENTINEL PASS:\s*\K\d+' "$AUDIT_DIR/summary.txt" | tail -1) || SENTINEL_PASS="0"
-            SENTINEL_FAIL=$(grep -oP 'SENTINEL FAIL:\s*\K\d+' "$AUDIT_DIR/summary.txt" | tail -1) || SENTINEL_FAIL="0"
-
-            log "  Baseline score: $SCORE"
-            log "  Sentinels: $SENTINEL_PASS pass, $SENTINEL_FAIL fail"
-
-            printf '%s\t%s\t%s\t%s\t%s\t%s\n' \
-                "$(git rev-parse --short HEAD)" "$CONCEPT" "$SCORE" "$SENTINEL_PASS" "$SENTINEL_FAIL" "baseline" \
-                >> "$RESULTS"
-
-            log "  Populating journal from baseline audit..."
-            FULL_AUDIT=""
-            for f in "$AUDIT_DIR"/*.txt; do
-                fname=$(basename "$f")
-                FULL_AUDIT="${FULL_AUDIT}
-### $fname
-$(cat "$f")
-"
-            done
-
-            EVALUATE_PROMPT="You are the evaluator in an autoresearch loop. A baseline iteration just completed — the game creation prompt was used without modifications. Your job is to analyze the results and populate the research journal.
-
-## Baseline Results
-
-Concept: $CONCEPT
-Score: $SCORE
-Sentinel passes: $SENTINEL_PASS
-Sentinel failures: $SENTINEL_FAIL
-
-## Full Audit Output
-$FULL_AUDIT
-
-## Instructions
-
-Write the journal file at $JOURNAL. The journal has four sections:
-
-1. **Patterns Observed** — what patterns do you see in the audit feedback? What are the prompt's current strengths and weaknesses?
-2. **Ideas Backlog** — based on the audit feedback, what changes to the game creation prompt or agents would most improve scores? Rank by expected impact. Be specific and actionable.
-3. **Dead Ends** — (empty for now, nothing has been tried yet)
-4. **Iteration Log** — record the baseline: concept, score, key observations.
-
-Be specific and actionable. 'Improve combat' is useless. 'Add per-weapon range effectiveness tables to the prompt so the generator creates distinct weapon identities' is useful.
-
-Write the updated journal to $JOURNAL using the Write tool. Output nothing else."
-
-            run_claude "$LOG_DIR/evaluate-baseline.log" "$EVALUATE_PROMPT" \
-                --model opus \
-                --tools "Read,Write" \
-                --permission-mode bypassPermissions \
-                || true
-
-            log "  Baseline complete. Journal populated."
-        fi
-    fi
-
-    log ""
-    # Clear skip-to after baseline so the main loop runs fully
-    SKIP_TO=""
-fi
 
 # --- Main Loop ---
 
@@ -260,16 +160,31 @@ log ""
 
 while true; do
     ITERATION=$(($(completed_iterations) + 1))
+    IS_BASELINE=false
 
-    # Reshuffle when we've exhausted the current order
-    if [[ ${#CONCEPT_ORDER[@]} -eq 0 ]]; then
-        mapfile -t CONCEPT_ORDER < <(shuffle_concepts)
-        log "  Shuffled concept order: ${CONCEPT_ORDER[*]}"
+    # First iteration (no results yet) is the baseline: use concept 0,
+    # skip the modify step, and label the result "baseline".
+    if [[ "$ITERATION" -eq 1 && "$SKIP_TO" != "loop" ]]; then
+        IS_BASELINE=true
+        CONCEPT=0
+        log "========================================"
+        log "  Baseline Run (Iteration 1)"
+        log "========================================"
+    else
+        # Reshuffle when we've exhausted the current order
+        if [[ ${#CONCEPT_ORDER[@]} -eq 0 ]]; then
+            mapfile -t CONCEPT_ORDER < <(shuffle_concepts)
+            log "  Shuffled concept order: ${CONCEPT_ORDER[*]}"
+        fi
+
+        # Pop the next concept
+        CONCEPT="${CONCEPT_ORDER[0]}"
+        CONCEPT_ORDER=("${CONCEPT_ORDER[@]:1}")
+
+        log "========================================"
+        log "  Iteration $ITERATION"
+        log "========================================"
     fi
-
-    # Pop the next concept
-    CONCEPT="${CONCEPT_ORDER[0]}"
-    CONCEPT_ORDER=("${CONCEPT_ORDER[@]:1}")
 
     # Get the concept description for context
     CONCEPT_DESC=$(awk -v n="$CONCEPT" '
@@ -278,15 +193,14 @@ while true; do
         found && NF { print }
     ' "$SCRIPT_DIR/test-prompts.md")
 
-    log "========================================"
-    log "  Iteration $ITERATION"
-    log "========================================"
-
     # ------------------------------------------------------------------
-    # Step 1: MODIFY (responds to previous audit)
+    # Step 1: MODIFY (responds to previous audit — skipped for baseline)
     # ------------------------------------------------------------------
 
-    if [[ "$SKIP_TO" == "generate" || "$SKIP_TO" == "audit" || "$SKIP_TO" == "evaluate" ]]; then
+    if [[ "$IS_BASELINE" == true ]]; then
+        log "[Step 1: Modify] SKIPPED (baseline — no audit data yet)"
+        THESIS_TEXT="baseline"
+    elif [[ "$SKIP_TO" == "generate" || "$SKIP_TO" == "audit" || "$SKIP_TO" == "evaluate" ]]; then
         log "[Step 1: Modify] SKIPPED (--skip-to $SKIP_TO)"
         THESIS_TEXT="(skipped — resuming from existing state)"
     else
@@ -423,8 +337,14 @@ Do NOT generate or audit a game. Only modify the generator files and commit."
     if [[ "$SKIP_TO" == "audit" || "$SKIP_TO" == "evaluate" ]]; then
         log "[Step 2: Generate] SKIPPED (--skip-to $SKIP_TO)"
     else
+        GEN_FLAGS=(--model "$MODEL")
+        if [[ "$CONTINUE" == true ]]; then
+            GEN_FLAGS+=(--continue)
+        fi
         log "[Step 2: Generate] Concept $CONCEPT..."
-        timeout 86400 ./generate.sh "$CONCEPT" --model "$MODEL" 2>&1 | tee run.log || true
+        timeout 86400 ./generate.sh "$CONCEPT" "${GEN_FLAGS[@]}" 2>&1 | tee run.log || true
+        # --continue only applies to the first generation call
+        CONTINUE=false
     fi
 
     # Summarize the generation log into a timeline for the evaluate step.
@@ -533,15 +453,40 @@ $(cat "$f")
 "
     done
 
-    EVALUATE_PROMPT="You are the evaluator in an autoresearch loop. An iteration just completed. Your job is to analyze the results and update the research journal.
+    if [[ "$IS_BASELINE" == true ]]; then
+        EVAL_PREAMBLE="You are the evaluator in an autoresearch loop. A baseline iteration just completed — the game creation prompt was used without modifications. Your job is to analyze the results and populate the research journal."
+        EVAL_RESULTS="## Baseline Results
 
-## Iteration $ITERATION Results
+Concept: $CONCEPT
+Score: $SCORE
+Sentinel passes: $SENTINEL_PASS
+Sentinel failures: $SENTINEL_FAIL"
+        EVAL_INSTRUCTIONS="Write the journal file at $JOURNAL. The journal has four sections:
+
+1. **Patterns Observed** — what patterns do you see in the audit feedback? What are the prompt's current strengths and weaknesses?
+2. **Ideas Backlog** — based on the audit feedback, what changes to the game creation prompt or agents would most improve scores? Rank by expected impact. Be specific and actionable.
+3. **Dead Ends** — (empty for now, nothing has been tried yet)
+4. **Iteration Log** — record the baseline: concept, score, key observations."
+    else
+        EVAL_PREAMBLE="You are the evaluator in an autoresearch loop. An iteration just completed. Your job is to analyze the results and update the research journal."
+        EVAL_RESULTS="## Iteration $ITERATION Results
 
 Concept: $CONCEPT ($CONCEPT_DESC)
 Score: $SCORE
 Sentinel passes: $SENTINEL_PASS
 Sentinel failures: $SENTINEL_FAIL
-Thesis: $THESIS_TEXT
+Thesis: $THESIS_TEXT"
+        EVAL_INSTRUCTIONS="Update the journal file at $JOURNAL. The journal has four sections:
+
+1. **Patterns Observed** — recurring themes across iterations. Update this with any new patterns you see. Remove patterns that are no longer relevant.
+2. **Ideas Backlog** — things worth trying in future iterations, ranked by expected impact. Add new ideas based on the audit feedback. Remove ideas that were tried (whether they worked or not). This is the most important section — it's what the next iteration's modify step reads to decide what to do.
+3. **Dead Ends** — approaches that were tried and didn't help. Keep this concise. The point is to avoid repeating failed approaches.
+4. **Iteration Log** — append a brief entry for this iteration: what was tried, what the score was, what the key takeaways were."
+    fi
+
+    EVALUATE_PROMPT="${EVAL_PREAMBLE}
+
+${EVAL_RESULTS}
 
 ## Generation Process Summary
 $(cat "$SCRIPT_DIR/generation-summary.md" 2>/dev/null || echo "(no generation summary available)")
@@ -557,12 +502,7 @@ $(cat "$RESULTS")
 
 ## Instructions
 
-Update the journal file at $JOURNAL. The journal has four sections:
-
-1. **Patterns Observed** — recurring themes across iterations. Update this with any new patterns you see. Remove patterns that are no longer relevant.
-2. **Ideas Backlog** — things worth trying in future iterations, ranked by expected impact. Add new ideas based on the audit feedback. Remove ideas that were tried (whether they worked or not). This is the most important section — it's what the next iteration's modify step reads to decide what to do.
-3. **Dead Ends** — approaches that were tried and didn't help. Keep this concise. The point is to avoid repeating failed approaches.
-4. **Iteration Log** — append a brief entry for this iteration: what was tried, what the score was, what the key takeaways were.
+${EVAL_INSTRUCTIONS}
 
 Be specific and actionable. 'Improve combat' is useless. 'Add per-weapon range effectiveness tables to the prompt so the generator creates distinct weapon identities' is useful.
 

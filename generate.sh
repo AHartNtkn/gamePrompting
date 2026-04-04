@@ -19,6 +19,7 @@ TEST_PROMPTS="$SCRIPT_DIR/test-prompts.md"
 MODEL="sonnet"
 OUTPUT_DIR=""
 CONCEPT=""
+CONTINUE=false
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
@@ -30,6 +31,10 @@ while [[ $# -gt 0 ]]; do
         --output-dir|-o)
             OUTPUT_DIR="$2"
             shift 2
+            ;;
+        --continue)
+            CONTINUE=true
+            shift
             ;;
         *)
             if [[ -z "$CONCEPT" ]]; then
@@ -44,11 +49,12 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ -z "$CONCEPT" ]]; then
-    echo "Usage: ./generate.sh <concept> [--model MODEL] [--output-dir DIR]"
+    echo "Usage: ./generate.sh <concept> [--model MODEL] [--output-dir DIR] [--continue]"
     echo ""
     echo "  concept      A test prompt number, a concept string, or a file path"
     echo "  --model      Claude model to use (default: sonnet)"
     echo "  --output-dir Output directory for game files (default: games/<name>/)"
+    echo "  --continue   Resume development on existing game (skip archive/clean)"
     echo ""
     echo "Test prompts (from test-prompts.md):"
     grep '^## Prompt [0-9]*:' "$TEST_PROMPTS" | sed 's/^## Prompt \([0-9]*\): \(.*\)/  \1  \2/'
@@ -98,29 +104,48 @@ fi
 
 OUTPUT_DIR="$(realpath -m "$OUTPUT_DIR")"
 
-# Archive existing game contents before generating
-if [[ -d "$GAMES_DIR" ]] && ls -A "$GAMES_DIR" | grep -qv '^\.git' 2>/dev/null; then
-    TIMESTAMP="$(date -u +%Y%m%d-%H%M%S)"
-    ARCHIVE_DEST="$ARCHIVE_DIR/$TIMESTAMP"
-    mkdir -p "$ARCHIVE_DEST"
-    # Move everything except .git files
-    find "$GAMES_DIR" -mindepth 1 -maxdepth 1 ! -name '.git*' -exec mv {} "$ARCHIVE_DEST/" \;
-    echo "Archived previous game(s) to: $ARCHIVE_DEST"
-fi
+if [[ "$CONTINUE" == true ]]; then
+    if [[ ! -d "$OUTPUT_DIR" ]]; then
+        echo "--continue specified but output directory does not exist: $OUTPUT_DIR" >&2
+        exit 1
+    fi
+    echo "Continuing existing game at: $OUTPUT_DIR"
+else
+    # Archive existing game contents before generating
+    if [[ -d "$GAMES_DIR" ]] && ls -A "$GAMES_DIR" | grep -qv '^\.git' 2>/dev/null; then
+        TIMESTAMP="$(date -u +%Y%m%d-%H%M%S)"
+        ARCHIVE_DEST="$ARCHIVE_DIR/$TIMESTAMP"
+        mkdir -p "$ARCHIVE_DEST"
+        # Move everything except .git files
+        find "$GAMES_DIR" -mindepth 1 -maxdepth 1 ! -name '.git*' -exec mv {} "$ARCHIVE_DEST/" \;
+        echo "Archived previous game(s) to: $ARCHIVE_DEST"
+    fi
 
-# Clean output directory so the generator starts fresh
-rm -rf "$OUTPUT_DIR"
-mkdir -p "$OUTPUT_DIR"
+    # Clean output directory so the generator starts fresh
+    rm -rf "$OUTPUT_DIR"
+    mkdir -p "$OUTPUT_DIR"
+fi
 
 # Assemble the full prompt
 TEMPLATE_TEXT="$(cat "$PROMPT_TEMPLATE")"
 FULL_PROMPT="${TEMPLATE_TEXT//GAME_CONCEPT_HERE/$CONCEPT_TEXT}"
 FULL_PROMPT="${FULL_PROMPT//GAME_OUTPUT_DIR/$OUTPUT_DIR}"
 
+CONTINUATION_TEXT="## CONTINUATION
+
+The previous generation session ended before the development loop completed. There is an incomplete implementation in the output directory. Read dev-status.md and dev-log.md to understand what was completed and what remains. Continue from where the previous session left off. Do not start over — build on what exists. Complete any unfinished verification waves, run the pre-delivery checklist, and ensure all 7 agents reach VERIFIED status."
+
+if [[ "$CONTINUE" == true ]]; then
+    FULL_PROMPT="${FULL_PROMPT}
+
+${CONTINUATION_TEXT}"
+fi
+
 echo "Game Generator"
 echo "  Concept: ${CONCEPT_NAME}"
 echo "  Model: $MODEL"
 echo "  Output: $OUTPUT_DIR"
+echo "  Continue: $CONTINUE"
 echo ""
 echo "Generating..."
 echo ""
@@ -161,6 +186,11 @@ echo "$AGENTS_JSON" > "$AGENTS_TMP"
 # 2. terminal — heavily truncated one-liners (for human readability)
 GEN_LOG="$SCRIPT_DIR/generation.log"
 
+# Fresh runs start a new log; --continue appends to the existing one.
+if [[ "$CONTINUE" != true ]]; then
+    : > "$GEN_LOG"
+fi
+
 JQ_COMPACT='del(.session_id, .uuid, .timestamp, .parent_tool_use_id, .rate_limit_info, .mcp_servers, .slash_commands, .apiKeySource, .claude_code_version, .output_style, .agents, .skills, .plugins, .fast_mode_state, .permissionMode, .modelUsage, .permission_denials, .message.model, .message.id, .message.usage, .message.stop_reason, .message.stop_sequence, .message.context_management, .tool_use_result, .total_cost_usd, .usage, .duration_ms, .duration_api_ms)
 | if .type == "assistant" then
     .message.content = [.message.content[]? |
@@ -181,6 +211,65 @@ JQ_COMPACT='del(.session_id, .uuid, .timestamp, .parent_tool_use_id, .rate_limit
       else . end]
   else . end'
 
+# --- Verification ---
+
+# The 7 verification agents that must all reach VERIFIED status.
+REQUIRED_AGENTS=(
+    dispatch-verifier
+    simulation-verifier
+    code-architecture-reviewer
+    design-reviewer
+    ui-reviewer
+    balance-checker
+    experience-reviewer
+)
+
+# Check whether the game directory has all verification certificates.
+# Returns 0 if fully verified, 1 if not. Prints what's missing to stdout.
+check_verification() {
+    local game_dir="$1"
+    local status_file="$game_dir/dev-status.md"
+    local missing=()
+
+    if [[ ! -f "$game_dir/run.sh" ]]; then
+        echo "MISSING: run.sh"
+        return 1
+    fi
+
+    if [[ ! -f "$game_dir/game-model.md" ]]; then
+        echo "MISSING: game-model.md"
+        return 1
+    fi
+
+    if [[ ! -f "$status_file" ]]; then
+        echo "MISSING: dev-status.md"
+        return 1
+    fi
+
+    for agent in "${REQUIRED_AGENTS[@]}"; do
+        local line
+        line=$(grep -i "^- *${agent}:" "$status_file" 2>/dev/null)
+        if [[ -z "$line" ]]; then
+            missing+=("$agent (not listed)")
+            continue
+        fi
+        local final_status
+        final_status=$(echo "$line" | grep -oE '[A-Z]+$')
+        if [[ "$final_status" != "VERIFIED" ]]; then
+            missing+=("$agent ($final_status)")
+        fi
+    done
+
+    if [[ ${#missing[@]} -gt 0 ]]; then
+        echo "NOT VERIFIED: ${missing[*]}"
+        return 1
+    fi
+
+    return 0
+}
+
+# --- Generation loop ---
+
 CURRENT_PROMPT="$FULL_PROMPT"
 
 while true; do
@@ -196,43 +285,50 @@ while true; do
         --add-dir "$OUTPUT_DIR" \
         --agents "$(cat "$AGENTS_TMP")" \
         < "$PROMPT_TMP" \
-        2>&1 | jq -c --unbuffered "$JQ_COMPACT" 2>/dev/null | tee "$GEN_LOG" | cut -c1-200 || true
+        2>&1 | jq -c --unbuffered "$JQ_COMPACT" 2>/dev/null | tee -a "$GEN_LOG" | cut -c1-200 || true
 
     rm -f "$PROMPT_TMP"
 
     # Check for API-level failure (rate limit, connection refused, etc.)
-    if ! grep -q '"type":"result".*"is_error":true' "$GEN_LOG" 2>/dev/null; then
-        break  # No API error — generation completed (successfully or not)
+    if grep -q '"type":"result".*"is_error":true' "$GEN_LOG" 2>/dev/null; then
+        file_count=$(find "$OUTPUT_DIR" -type f -not -path '*/__pycache__/*' 2>/dev/null | wc -l)
+        if [[ "$file_count" -eq 0 ]]; then
+            echo "API error with no partial work to continue from."
+            break
+        fi
+
+        echo ""
+        echo "API error after partial generation ($file_count files created)."
+        echo "Polling every 5 minutes until API recovers..."
+
+        while true; do
+            sleep 300
+            test_output=$(claude --model "$MODEL" -p "Say OK" 2>&1) || true
+            if echo "$test_output" | grep -qiE "hit your limit|API Error|ConnectionRefused|unable to connect"; then
+                echo "API still unavailable. Waiting another 5 minutes..."
+            else
+                echo "API recovered. Resuming generation..."
+                break
+            fi
+        done
+
+        CURRENT_PROMPT="${FULL_PROMPT}
+
+${CONTINUATION_TEXT}"
+        continue
     fi
 
-    # API error — check if there's partial work to continue from
-    file_count=$(find "$OUTPUT_DIR" -type f -not -path '*/__pycache__/*' 2>/dev/null | wc -l)
-    if [[ "$file_count" -eq 0 ]]; then
-        echo "API error with no partial work to continue from."
+    # No API error — session completed. Check if the game is actually done.
+    verify_result=$(check_verification "$OUTPUT_DIR")
+    if [[ $? -eq 0 ]]; then
+        echo "Verification complete: all agents VERIFIED."
         break
     fi
 
-    echo ""
-    echo "API error after partial generation ($file_count files created)."
-    echo "Polling every 5 minutes until API recovers..."
-
-    while true; do
-        sleep 300
-        test_output=$(claude --model "$MODEL" -p "Say OK" 2>&1) || true
-        if echo "$test_output" | grep -qiE "hit your limit|API Error|ConnectionRefused|unable to connect"; then
-            echo "API still unavailable. Waiting another 5 minutes..."
-        else
-            echo "API recovered. Resuming generation from partial work..."
-            break
-        fi
-    done
-
-    # Rebuild prompt with continuation note
+    echo "Verification incomplete ($verify_result). Restarting generation..."
     CURRENT_PROMPT="${FULL_PROMPT}
 
-## CONTINUATION
-
-The previous generation session was interrupted by an API error. There is an incomplete implementation already in the output directory. Review the existing files and continue from where the previous session left off. Do not start over — build on what exists. Complete any unfinished systems, verify and test the game, and ensure it is playable with a run.sh launch script."
+${CONTINUATION_TEXT}"
 done
 
 rm -f "$AGENTS_TMP"

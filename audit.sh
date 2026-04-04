@@ -78,18 +78,10 @@ if [[ -d "$GAME_PATH" ]]; then
         echo "WARNING: No run.sh found in $GAME_DIR. The auditor will need to figure out how to run the game."
         RUN_CMD=""
     fi
-    # Collect all source files
-    GAME_SOURCE="$(find "$GAME_DIR" -type f \( -name '*.py' -o -name '*.js' -o -name '*.ts' -o -name '*.rb' -o -name '*.rs' -o -name '*.go' -o -name '*.java' -o -name '*.c' -o -name '*.cpp' -o -name '*.lua' -o -name '*.sh' -o -name '*.md' -o -name '*.txt' -o -name '*.json' -o -name '*.yaml' -o -name '*.yml' -o -name '*.toml' -o -name '*.cfg' -o -name '*.ini' \) ! -path '*/__pycache__/*' ! -path '*/node_modules/*' ! -path '*/.git/*' -print0 | sort -z | while IFS= read -r -d '' f; do
-        echo "=== $(realpath --relative-to="$GAME_DIR" "$f") ==="
-        cat "$f"
-        echo ""
-    done)"
 else
     GAME_DIR="$(dirname "$GAME_PATH")"
     GAME_NAME="$(basename "$GAME_PATH" | sed 's/\.[^.]*$//')"
     RUN_CMD="$GAME_PATH"
-    GAME_SOURCE="=== $(basename "$GAME_PATH") ===
-$(cat "$GAME_PATH")"
 fi
 
 # Archive existing audits
@@ -130,15 +122,16 @@ if [[ -n "$RUN_CMD" ]]; then
 Launch script: ${RUN_CMD}"
 fi
 
+# List source files so the auditor knows what's there
+GAME_FILES="$(find "$GAME_DIR" -type f \( -name '*.py' -o -name '*.js' -o -name '*.ts' -o -name '*.rb' -o -name '*.rs' -o -name '*.go' -o -name '*.java' -o -name '*.c' -o -name '*.cpp' -o -name '*.lua' -o -name '*.sh' -o -name '*.md' -o -name '*.txt' -o -name '*.json' -o -name '*.yaml' -o -name '*.yml' -o -name '*.toml' -o -name '*.cfg' -o -name '*.ini' \) ! -path '*/__pycache__/*' ! -path '*/node_modules/*' ! -path '*/.git/*' -print0 | sort -z | xargs -0 -I{} realpath --relative-to="$GAME_DIR" "{}")"
+
 GAME_INFO="${GAME_INFO}
 
-### Source Code
+### Source Files
 
-\`\`\`
-${GAME_SOURCE}
-\`\`\`
+${GAME_FILES}
 
-Read the source code above to understand the game's structure, then use Bash to run and play the game. You must actually play it before scoring. Follow the Play Protocol in the preamble."
+Use the Read tool to examine these files. Then use Bash to run and play the game. You must actually play it before scoring. Follow the Play Protocol in the preamble."
 
 # --- Parallel execution ---
 
@@ -181,6 +174,8 @@ Use the Write tool to create this file. Do not rely on stdout."
 
     echo "$full_prompt_with_output" > "$prompt_file_tmp"
 
+    local stderr_log="${output_file%.txt}_stderr.log"
+
     claude -p - \
         --model "$MODEL" \
         --output-format text \
@@ -188,10 +183,19 @@ Use the Write tool to create this file. Do not rely on stdout."
         --permission-mode bypassPermissions \
         --add-dir "$GAME_DIR" \
         < "$prompt_file_tmp" \
-        > /dev/null 2>/dev/null || true
+        > /dev/null 2>"$stderr_log"
+    local exit_code=$?
 
     if [[ ! -s "$output_file" ]]; then
-        mv "$output_file" "${output_file%.txt}_error.txt" 2>/dev/null
+        # Preserve stderr as the error file so failures are diagnosable
+        if [[ -s "$stderr_log" ]]; then
+            mv "$stderr_log" "${output_file%.txt}_error.txt"
+        else
+            echo "Auditor [$id] exited with code $exit_code but produced no output and no stderr" \
+                > "${output_file%.txt}_error.txt"
+        fi
+    else
+        rm -f "$stderr_log"
     fi
 
     rm -f "$prompt_file_tmp"
