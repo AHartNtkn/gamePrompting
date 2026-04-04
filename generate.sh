@@ -248,15 +248,14 @@ check_verification() {
 
     for agent in "${REQUIRED_AGENTS[@]}"; do
         local line
-        line=$(grep -i "^- *${agent}:" "$status_file" 2>/dev/null)
+        line=$(grep -i "^- *${agent}:" "$status_file") || true
         if [[ -z "$line" ]]; then
             missing+=("$agent (not listed)")
             continue
         fi
-        local final_status
-        final_status=$(echo "$line" | grep -oE '[A-Z]+$')
-        if [[ "$final_status" != "VERIFIED" ]]; then
-            missing+=("$agent ($final_status)")
+        # VERIFIED must be the final status token on the line
+        if ! echo "$line" | grep -qE 'VERIFIED\s*$'; then
+            missing+=("$agent")
         fi
     done
 
@@ -319,8 +318,7 @@ ${CONTINUATION_TEXT}"
     fi
 
     # No API error — session completed. Check if the game is actually done.
-    verify_result=$(check_verification "$OUTPUT_DIR")
-    if [[ $? -eq 0 ]]; then
+    if verify_result=$(check_verification "$OUTPUT_DIR"); then
         echo "Verification complete: all agents VERIFIED."
         break
     fi
